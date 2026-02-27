@@ -1,6 +1,6 @@
 const CONSTANTS = {
-  MAP_RADIUS: 2000,
-  WORLD_SIZE: 4000,
+  MAP_RADIUS: 1000,
+  WORLD_SIZE: 2000,
   TICK_RATE: 20,
   TICK_INTERVAL: 50,
   PLAYER_SPEED: 200,
@@ -14,14 +14,14 @@ const CONSTANTS = {
   MAX_PLAYERS: 8,
   RECONNECT_WINDOW: 10000,
   CAGE_POSITIONS: [
-    { x: 0, y: -1500 },
-    { x: 0, y: 1500 },
-    { x: 1500, y: 0 },
-    { x: -1500, y: 0 },
+    { x: 0, y: -750 },
+    { x: 0, y: 750 },
+    { x: 750, y: 0 },
+    { x: -750, y: 0 },
   ],
   CAGE_ZONE_RADIUS: 80,
-  HUNTER_SPAWN_DISTANCE: 1500,
-  RUNNER_SPAWN_RADIUS: 300,
+  HUNTER_SPAWN_DISTANCE: 750,
+  RUNNER_SPAWN_RADIUS: 150,
 };
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -278,8 +278,8 @@ class Game {
     const players = {};
     for (const [id, p] of this.players) {
       players[id] = {
-        x: Math.round(p.x),
-        y: Math.round(p.y),
+        x: p.x,
+        y: p.y,
         angle: p.angle,
         team: p.team,
         state: p.state,

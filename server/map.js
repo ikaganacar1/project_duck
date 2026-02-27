@@ -4,10 +4,10 @@ function generateObstacles() {
   const obstacles = [];
   const rng = (min, max) => min + Math.random() * (max - min);
 
-  // Rocks: 18 total, varied sizes, solid collision
-  for (let i = 0; i < 18; i++) {
+  // Rocks: 10 total, varied sizes, solid collision
+  for (let i = 0; i < 10; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const dist = rng(200, C.MAP_RADIUS - 200);
+    const dist = rng(100, C.MAP_RADIUS - 100);
     obstacles.push({
       type: 'rock',
       x: Math.cos(angle) * dist,
@@ -16,10 +16,10 @@ function generateObstacles() {
     });
   }
 
-  // Trees: 22 total, solid collision
-  for (let i = 0; i < 22; i++) {
+  // Trees: 12 total, solid collision
+  for (let i = 0; i < 12; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const dist = rng(200, C.MAP_RADIUS - 200);
+    const dist = rng(100, C.MAP_RADIUS - 100);
     obstacles.push({
       type: 'tree',
       x: Math.cos(angle) * dist,
@@ -28,10 +28,10 @@ function generateObstacles() {
     });
   }
 
-  // Bushes: 12 total, hide mechanic (no solid collision)
-  for (let i = 0; i < 12; i++) {
+  // Bushes: 8 total, hide mechanic (no solid collision)
+  for (let i = 0; i < 8; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const dist = rng(300, C.MAP_RADIUS - 300);
+    const dist = rng(150, C.MAP_RADIUS - 150);
     obstacles.push({
       type: 'bush',
       x: Math.cos(angle) * dist,

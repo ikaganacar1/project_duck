@@ -105,6 +105,7 @@ class GameScene extends Phaser.Scene {
     });
 
     this.latestState = null;
+    this.myLastInput = { angle: 0, moving: false };
     window.network.on('game:state', (state) => {
       this.latestState = state;
     });
@@ -128,13 +129,28 @@ class GameScene extends Phaser.Scene {
     const sec = state.timer % 60;
     this.timerText.setText('T ' + min + ':' + (sec < 10 ? '0' : '') + sec);
 
+    // Client-side prediction: move local player immediately
+    const mySpr = this.playerSprites[myId];
+    if (mySpr && this.joystick.moving) {
+      const me = state.players[myId];
+      if (me && me.state === 'free') {
+        const speed = CONSTANTS.PLAYER_SPEED / 60; // 60fps approx
+        const dx = Math.cos(this.joystick.angle) * speed;
+        const dy = Math.sin(this.joystick.angle) * speed;
+        mySpr.container.x += dx;
+        mySpr.container.y += dy;
+      }
+    }
+
     for (const [id, p] of Object.entries(state.players)) {
       let spr = this.playerSprites[id];
       if (!spr) {
         spr = this.createPlayerSprite(id, p);
       }
 
-      const lerpFactor = 0.3;
+      // Local player: gentle reconciliation with server. Others: standard lerp.
+      const isMe = id === myId;
+      const lerpFactor = isMe ? 0.1 : 0.15;
       spr.container.x += (p.x - spr.container.x) * lerpFactor;
       spr.container.y += (p.y - spr.container.y) * lerpFactor;
 
