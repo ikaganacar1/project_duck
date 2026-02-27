@@ -279,6 +279,7 @@ class Game {
         x: p.x,
         y: p.y,
         angle: p.angle,
+        moving: p.moving,
         team: p.team,
         state: p.state,
         carriedBy: p.carriedBy,

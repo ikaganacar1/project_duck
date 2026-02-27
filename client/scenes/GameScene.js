@@ -186,8 +186,8 @@ class GameScene extends Phaser.Scene {
         spr.container.y += (p.y - spr.container.y) * 0.2;
       }
 
-      if (p.angle !== undefined) {
-        spr.sprite.setFlipX(Math.abs(p.angle) > Math.PI / 2);
+      if (p.moving) {
+        spr.sprite.setFlipX(Math.cos(p.angle) < 0);
       }
 
       spr.nameLabel.setText(p.name);
@@ -290,8 +290,8 @@ class GameScene extends Phaser.Scene {
   createPlayerSprite(id, data) {
     var textureKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
     var container = this.add.container(data.x, data.y);
-    var sprite = this.add.image(0, 0, textureKey);
-    var nameLabel = this.add.text(0, -24, data.name || '', {
+    var sprite = this.add.image(0, 0, textureKey).setDisplaySize(48, 38);
+    var nameLabel = this.add.text(0, -28, data.name || '', {
       fontSize: '11px', color: '#ffffff',
       backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5);

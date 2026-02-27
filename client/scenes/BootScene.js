@@ -13,8 +13,8 @@ class BootScene extends Phaser.Scene {
 
     // Try loading custom assets — missing files are handled gracefully
     this.assetList = [
-      { key: 'duck-hunter', path: 'assets/duck-hunter.svg', type: 'svg', w: 40, h: 32 },
-      { key: 'duck-runner', path: 'assets/duck-runner.svg', type: 'svg', w: 40, h: 32 },
+      { key: 'duck-hunter', path: 'assets/duck-hunter.svg', type: 'svg', w: 96, h: 76 },
+      { key: 'duck-runner', path: 'assets/duck-runner.svg', type: 'svg', w: 96, h: 76 },
       { key: 'rock', path: 'assets/rock.svg', type: 'svg', w: 80, h: 80 },
       { key: 'tree-trunk', path: 'assets/tree-trunk.svg', type: 'svg', w: 30, h: 30 },
       { key: 'tree-canopy', path: 'assets/tree-canopy.svg', type: 'svg', w: 70, h: 70 },
