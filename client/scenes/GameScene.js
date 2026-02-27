@@ -79,40 +79,25 @@ class GameScene extends Phaser.Scene {
       backgroundColor: '#00000088', padding: { x: 12, y: 4 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
-    // --- RESCUE BUTTON (only for cage rescue) ---
-    this.rescueBtn = this.add.text(812 - 90, 375 - 70, '', {
-      fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#33aa33', padding: { x: 16, y: 12 },
-      align: 'center',
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false)
-      .setInteractive({ useHandCursor: true });
-
-    this.rescueBtn.on('pointerdown', function() {
-      var me = this.latestState?.players?.[window.network.id];
-      if (!me || me.state !== 'free' || me.team !== 'runner') return;
-      var nearCage = this.findNearestCage(me.x, me.y);
-      if (nearCage !== null) {
-        window.network.emit('rescue', { cageIndex: nearCage });
-        this.rescueBtn.setBackgroundColor('#66cc66');
-        this.time.delayedCall(100, function() {
-          this.rescueBtn.setBackgroundColor('#33aa33');
-        }, [], this);
-      }
-    }, this);
-
-    // --- STRUGGLE: tap anywhere on screen when carried ---
-    this.struggleCounter = this.add.text(812 / 2, 375 / 2, '', {
+    // --- CENTER COUNTER (struggle + rescue) ---
+    this.centerCounter = this.add.text(812 / 2, 375 / 2, '', {
       fontSize: '28px', color: '#ffffff', fontStyle: 'bold',
       backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1003).setVisible(false);
 
+    // --- TAP ANYWHERE: struggle when carried, rescue when near cage ---
     this.input.on('pointerdown', function() {
       var me = this.latestState?.players?.[window.network.id];
       if (!me) return;
       if (me.state === 'carried') {
         window.network.emit('struggle', {});
-        // Flash effect
         this.cameras.main.flash(50, 255, 100, 100, false);
+      } else if (me.state === 'free' && me.team === 'runner') {
+        var nearCage = this.findNearestCage(me.x, me.y);
+        if (nearCage !== null && this.latestState.cages[nearCage].prisoners.length > 0) {
+          window.network.emit('rescue', { cageIndex: nearCage });
+          this.cameras.main.flash(50, 100, 255, 100, false);
+        }
       }
     }, this);
 
@@ -258,39 +243,39 @@ class GameScene extends Phaser.Scene {
     var meState = state.players[myId];
     if (meState) {
       if (meState.state === 'carried') {
-        // Show struggle counter in center
         var count = Math.floor(meState.struggleCount || 0);
-        this.struggleCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
-        this.struggleCounter.setVisible(true);
-        this.rescueBtn.setVisible(false);
+        this.centerCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
+        this.centerCounter.setBackgroundColor('#cc333399');
+        this.centerCounter.setVisible(true);
         this.statusText.setText('Yakalandin! Ekrana tikla!');
       } else if (meState.state === 'caged') {
-        this.struggleCounter.setVisible(false);
-        this.rescueBtn.setVisible(false);
+        this.centerCounter.setVisible(false);
         this.statusText.setText('Kafestesin! Bekle...');
       } else if (meState.state === 'free') {
-        this.struggleCounter.setVisible(false);
         // Immunity indicator
         if (meState.immune) {
           this.statusText.setText('IMMUNE!');
         } else {
           this.statusText.setText('');
         }
-        // Rescue button for runners near cage
+        // Rescue counter for runners near cage with prisoners
         if (meState.team === 'runner') {
           var nearCage = this.findNearestCage(meState.x, meState.y);
           if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
-            this.rescueBtn.setVisible(true);
-            this.rescueBtn.setText('KURTAR!\n(' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD + ')');
+            this.centerCounter.setText('KURTAR! ' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD);
+            this.centerCounter.setBackgroundColor('#33aa3399');
+            this.centerCounter.setVisible(true);
+            if (!meState.immune) {
+              this.statusText.setText('Kafese yakin! Tikla!');
+            }
           } else {
-            this.rescueBtn.setVisible(false);
+            this.centerCounter.setVisible(false);
           }
         } else {
-          this.rescueBtn.setVisible(false);
+          this.centerCounter.setVisible(false);
         }
       } else {
-        this.struggleCounter.setVisible(false);
-        this.rescueBtn.setVisible(false);
+        this.centerCounter.setVisible(false);
         this.statusText.setText('');
       }
 

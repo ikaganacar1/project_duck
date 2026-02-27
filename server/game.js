@@ -167,7 +167,7 @@ class Game {
 
     const dx = player.x - cage.x;
     const dy = player.y - cage.y;
-    if (Math.sqrt(dx * dx + dy * dy) > C.CAGE_ZONE_RADIUS) return;
+    if (Math.sqrt(dx * dx + dy * dy) > C.CAGE_ZONE_RADIUS * 2.5) return;
 
     cage.rescueProgress++;
     if (cage.rescueProgress >= C.CAGE_RESCUE_THRESHOLD) {
