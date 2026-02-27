@@ -286,6 +286,7 @@ class Game {
         carriedBy: p.carriedBy,
         inBush: p.inBush,
         name: p.name,
+        struggleCount: p.struggleCount,
       };
     }
     this.io.emit('game:state', {

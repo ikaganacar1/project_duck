@@ -8,19 +8,19 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
-    const myId = window.network.id;
-    const myTeam = this.gameData.players[myId]?.team;
+    var myId = window.network.id;
+    var myTeam = this.gameData.players[myId]?.team;
 
     this.cameras.main.setBounds(
-      -CONSTANTS.MAP_RADIUS, -CONSTANTS.MAP_RADIUS,
-      CONSTANTS.WORLD_SIZE, CONSTANTS.WORLD_SIZE
+      -CONSTANTS.MAP_RADIUS - 50, -CONSTANTS.MAP_RADIUS - 50,
+      CONSTANTS.WORLD_SIZE + 100, CONSTANTS.WORLD_SIZE + 100
     );
 
     this.drawMap();
 
     this.obstacleSprites = [];
-    for (const obs of this.gameData.obstacles) {
-      let sprite;
+    for (var obs of this.gameData.obstacles) {
+      var sprite;
       if (obs.type === 'rock') {
         sprite = this.add.image(obs.x, obs.y, 'rock')
           .setDisplaySize(obs.radius * 2, obs.radius * 2);
@@ -39,45 +39,31 @@ class GameScene extends Phaser.Scene {
     }
 
     this.cageSprites = [];
-    for (let i = 0; i < this.gameData.cages.length; i++) {
-      const cage = this.gameData.cages[i];
-      const cageSprite = this.add.image(cage.x, cage.y, 'cage').setAlpha(0.5);
-      const cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
+    for (var i = 0; i < this.gameData.cages.length; i++) {
+      var cage = this.gameData.cages[i];
+      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setAlpha(0.5);
+      var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
         fontSize: '14px', color: '#ffffff',
       }).setOrigin(0.5);
-      const progressText = this.add.text(cage.x, cage.y + 90, '', {
+      var progressText = this.add.text(cage.x, cage.y + 90, '', {
         fontSize: '12px', color: '#ffaaaa',
       }).setOrigin(0.5);
       this.cageSprites.push({ sprite: cageSprite, text: cageText, progressText, index: i });
     }
 
     this.playerSprites = {};
-    for (const [id, p] of Object.entries(this.gameData.players)) {
+    for (var [id, p] of Object.entries(this.gameData.players)) {
       this.createPlayerSprite(id, p);
     }
 
-    const mySpr = this.playerSprites[myId];
+    var mySpr = this.playerSprites[myId];
     if (mySpr) {
-      this.cameras.main.startFollow(mySpr.container, true, 0.1, 0.1);
+      this.cameras.main.startFollow(mySpr.container, true, 0.08, 0.08);
     }
 
     this.joystick = new VirtualJoystick(this);
 
-    this.input.on('pointerdown', (ptr) => {
-      if (ptr.x <= this.cameras.main.width * 0.5) return;
-      const me = this.latestState?.players?.[myId];
-      if (!me) return;
-
-      if (me.state === 'carried') {
-        window.network.emit('struggle', {});
-      } else if (me.state === 'free' && me.team === 'runner') {
-        const nearCage = this.findNearestCage(me.x, me.y);
-        if (nearCage !== null) {
-          window.network.emit('rescue', { cageIndex: nearCage });
-        }
-      }
-    });
-
+    // HUD
     this.timerText = this.add.text(10, 10, '', {
       fontSize: '20px', color: '#ffffff', backgroundColor: '#00000088',
       padding: { x: 8, y: 4 },
@@ -88,71 +74,125 @@ class GameScene extends Phaser.Scene {
       backgroundColor: '#00000088', padding: { x: 8, y: 4 },
     }).setScrollFactor(0).setDepth(999);
 
-    this.statusText = this.add.text(this.cameras.main.width / 2, 10, '', {
-      fontSize: '18px', color: '#ff8888', fontStyle: 'bold',
+    this.statusText = this.add.text(812 / 2, 10, '', {
+      fontSize: '16px', color: '#ff8888', fontStyle: 'bold',
       backgroundColor: '#00000088', padding: { x: 12, y: 4 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
+    // --- ACTION BUTTON (struggle / rescue) ---
+    this.actionBtn = this.add.text(812 - 90, 375 - 70, '', {
+      fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#cc3333', padding: { x: 16, y: 12 },
+      align: 'center',
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false)
+      .setInteractive({ useHandCursor: true });
+
+    this.actionBtn.on('pointerdown', function() {
+      var me = this.latestState?.players?.[window.network.id];
+      if (!me) return;
+      if (me.state === 'carried') {
+        window.network.emit('struggle', {});
+        // Visual feedback
+        this.actionBtn.setBackgroundColor('#ff6666');
+        this.time.delayedCall(100, function() {
+          this.actionBtn.setBackgroundColor('#cc3333');
+        }, [], this);
+      } else if (me.state === 'free' && me.team === 'runner') {
+        var nearCage = this.findNearestCage(me.x, me.y);
+        if (nearCage !== null) {
+          window.network.emit('rescue', { cageIndex: nearCage });
+          this.actionBtn.setBackgroundColor('#66cc66');
+          this.time.delayedCall(100, function() {
+            this.actionBtn.setBackgroundColor('#33aa33');
+          }, [], this);
+        }
+      }
+    }, this);
+
+    // Input send
     this.inputTimer = this.time.addEvent({
       delay: CONSTANTS.TICK_INTERVAL,
-      callback: () => {
+      callback: function() {
         window.network.emit('input', {
           angle: this.joystick.angle,
           moving: this.joystick.moving,
         });
       },
+      callbackScope: this,
       loop: true,
     });
 
     this.latestState = null;
-    this.myLastInput = { angle: 0, moving: false };
-    window.network.on('game:state', (state) => {
-      this.latestState = state;
-    });
+    this.prevState = null;
+    this.stateTime = 0;
 
-    window.network.on('game:end', (data) => {
+    window.network.on('game:state', function(state) {
+      this.prevState = this.latestState;
+      this.latestState = state;
+      this.stateTime = 0;
+    }.bind(this));
+
+    window.network.on('game:end', function(data) {
       this.joystick.destroy();
       this.scene.start('Result', data);
-    });
-
-    this.scale.on('resize', (gameSize) => {
-      this.statusText.setPosition(gameSize.width / 2, 10);
-    });
+    }.bind(this));
   }
 
-  update() {
+  update(time, delta) {
     if (!this.latestState) return;
-    const myId = window.network.id;
-    const state = this.latestState;
+    var myId = window.network.id;
+    var state = this.latestState;
 
-    const min = Math.floor(state.timer / 60);
-    const sec = state.timer % 60;
+    // Timer
+    var min = Math.floor(state.timer / 60);
+    var sec = state.timer % 60;
     this.timerText.setText('T ' + min + ':' + (sec < 10 ? '0' : '') + sec);
 
-    // Client-side prediction: move local player immediately
-    const mySpr = this.playerSprites[myId];
+    // Interpolation timing
+    this.stateTime += delta;
+    var t = Math.min(this.stateTime / CONSTANTS.TICK_INTERVAL, 1);
+
+    // Client-side prediction for local player
+    var mySpr = this.playerSprites[myId];
     if (mySpr && this.joystick.moving) {
-      const me = state.players[myId];
+      var me = state.players[myId];
       if (me && me.state === 'free') {
-        const speed = CONSTANTS.PLAYER_SPEED / 60; // 60fps approx
-        const dx = Math.cos(this.joystick.angle) * speed;
-        const dy = Math.sin(this.joystick.angle) * speed;
+        var speed = CONSTANTS.PLAYER_SPEED * (delta / 1000);
+        var dx = Math.cos(this.joystick.angle) * speed;
+        var dy = Math.sin(this.joystick.angle) * speed;
         mySpr.container.x += dx;
         mySpr.container.y += dy;
+        // Clamp to map bounds
+        var dist = Math.sqrt(mySpr.container.x * mySpr.container.x + mySpr.container.y * mySpr.container.y);
+        if (dist > CONSTANTS.MAP_RADIUS) {
+          var scale = CONSTANTS.MAP_RADIUS / dist;
+          mySpr.container.x *= scale;
+          mySpr.container.y *= scale;
+        }
       }
     }
 
-    for (const [id, p] of Object.entries(state.players)) {
-      let spr = this.playerSprites[id];
+    for (var [id, p] of Object.entries(state.players)) {
+      var spr = this.playerSprites[id];
       if (!spr) {
         spr = this.createPlayerSprite(id, p);
       }
 
-      // Local player: gentle reconciliation with server. Others: standard lerp.
-      const isMe = id === myId;
-      const lerpFactor = isMe ? 0.1 : 0.15;
-      spr.container.x += (p.x - spr.container.x) * lerpFactor;
-      spr.container.y += (p.y - spr.container.y) * lerpFactor;
+      var isMe = id === myId;
+
+      // For local player: gentle reconciliation. For others: time-based interpolation.
+      if (isMe) {
+        var lerpFactor = 0.08;
+        spr.container.x += (p.x - spr.container.x) * lerpFactor;
+        spr.container.y += (p.y - spr.container.y) * lerpFactor;
+      } else if (this.prevState && this.prevState.players[id]) {
+        var prev = this.prevState.players[id];
+        spr.container.x = prev.x + (p.x - prev.x) * t;
+        spr.container.y = prev.y + (p.y - prev.y) * t;
+      } else {
+        spr.container.x += (p.x - spr.container.x) * 0.2;
+        spr.container.y += (p.y - spr.container.y) * 0.2;
+      }
 
       if (p.angle !== undefined) {
         spr.sprite.setFlipX(Math.abs(p.angle) > Math.PI / 2);
@@ -161,13 +201,13 @@ class GameScene extends Phaser.Scene {
       spr.nameLabel.setText(p.name);
 
       if (id !== myId && p.inBush) {
-        const me = state.players[myId];
-        if (me && me.team !== p.team) {
-          const dx = p.x - me.x;
-          const dy = p.y - me.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const alpha = dist < CONSTANTS.BUSH_VISIBILITY_DISTANCE
-            ? 1 - (dist / CONSTANTS.BUSH_VISIBILITY_DISTANCE)
+        var meData = state.players[myId];
+        if (meData && meData.team !== p.team) {
+          var bdx = p.x - meData.x;
+          var bdy = p.y - meData.y;
+          var bdist = Math.sqrt(bdx * bdx + bdy * bdy);
+          var alpha = bdist < CONSTANTS.BUSH_VISIBILITY_DISTANCE
+            ? 1 - (bdist / CONSTANTS.BUSH_VISIBILITY_DISTANCE)
             : 0;
           spr.container.setAlpha(Math.max(0.05, alpha));
         } else {
@@ -182,15 +222,17 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    for (const id of Object.keys(this.playerSprites)) {
-      if (!state.players[id]) {
-        this.playerSprites[id].container.destroy();
-        delete this.playerSprites[id];
+    // Remove disconnected
+    for (var pid of Object.keys(this.playerSprites)) {
+      if (!state.players[pid]) {
+        this.playerSprites[pid].container.destroy();
+        delete this.playerSprites[pid];
       }
     }
 
-    for (const cageSpr of this.cageSprites) {
-      const cageData = state.cages[cageSpr.index];
+    // Cages
+    for (var cageSpr of this.cageSprites) {
+      var cageData = state.cages[cageSpr.index];
       if (cageData.prisoners.length > 0) {
         cageSpr.sprite.setTexture('cage-active');
         cageSpr.text.setText('Kafes (' + cageData.prisoners.length + ')');
@@ -205,53 +247,87 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    const me = state.players[myId];
-    if (me) {
-      if (me.state === 'carried') {
-        this.statusText.setText('Yakalandin! Sag tarafa tikla - Deben!');
-      } else if (me.state === 'caged') {
-        this.statusText.setText('Kafestesin! Takim arkadasini bekle...');
+    // Action button logic
+    var meState = state.players[myId];
+    if (meState) {
+      if (meState.state === 'carried') {
+        this.actionBtn.setVisible(true);
+        this.actionBtn.setText('DEBEN!\n(' + Math.floor(state.players[myId].struggleCount || 0) + '/' + CONSTANTS.STRUGGLE_THRESHOLD + ')');
+        this.actionBtn.setBackgroundColor('#cc3333');
+        this.statusText.setText('Yakalandin!');
+      } else if (meState.state === 'caged') {
+        this.actionBtn.setVisible(false);
+        this.statusText.setText('Kafestesin! Bekle...');
+      } else if (meState.state === 'free' && meState.team === 'runner') {
+        var nearCage = this.findNearestCage(meState.x, meState.y);
+        if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
+          this.actionBtn.setVisible(true);
+          this.actionBtn.setText('KURTAR!\n(' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD + ')');
+          this.actionBtn.setBackgroundColor('#33aa33');
+        } else {
+          this.actionBtn.setVisible(false);
+        }
+        this.statusText.setText('');
       } else {
+        this.actionBtn.setVisible(false);
         this.statusText.setText('');
       }
     }
   }
 
   createPlayerSprite(id, data) {
-    const textureKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
-    const container = this.add.container(data.x, data.y);
-    const sprite = this.add.image(0, 0, textureKey);
-    const nameLabel = this.add.text(0, -24, data.name || '', {
+    var textureKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
+    var container = this.add.container(data.x, data.y);
+    var sprite = this.add.image(0, 0, textureKey);
+    var nameLabel = this.add.text(0, -24, data.name || '', {
       fontSize: '11px', color: '#ffffff',
       backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5);
     container.add([sprite, nameLabel]);
     container.setDepth(100);
 
-    this.playerSprites[id] = { container, sprite, nameLabel };
+    this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel };
     return this.playerSprites[id];
   }
 
   drawMap() {
-    const g = this.add.graphics();
+    // Dark outside area
+    var outer = this.add.graphics();
+    outer.fillStyle(0x111111, 1);
+    outer.fillRect(
+      -CONSTANTS.MAP_RADIUS - 200, -CONSTANTS.MAP_RADIUS - 200,
+      CONSTANTS.WORLD_SIZE + 400, CONSTANTS.WORLD_SIZE + 400
+    );
+    outer.setDepth(-3);
+
+    // Green playable area
+    var g = this.add.graphics();
     g.fillStyle(0x4a8a2a, 1);
     g.fillCircle(0, 0, CONSTANTS.MAP_RADIUS);
-    g.lineStyle(4, 0x2d5a1b, 1);
-    g.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS);
     g.setDepth(-1);
 
-    const outer = this.add.graphics();
-    outer.fillStyle(0x1a1a1a, 0.8);
-    outer.fillRect(-CONSTANTS.MAP_RADIUS, -CONSTANTS.MAP_RADIUS, CONSTANTS.WORLD_SIZE, CONSTANTS.WORLD_SIZE);
-    outer.setDepth(-2);
+    // Thick visible border
+    var border = this.add.graphics();
+    border.lineStyle(6, 0xff4444, 0.8);
+    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS);
+    // Second ring for visibility
+    border.lineStyle(2, 0xffffff, 0.3);
+    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS + 4);
+    border.setDepth(50);
+
+    // Dashed warning ring inside
+    var warning = this.add.graphics();
+    warning.lineStyle(1, 0xffaa00, 0.3);
+    warning.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS - 30);
+    warning.setDepth(-1);
   }
 
   findNearestCage(px, py) {
-    for (let i = 0; i < CONSTANTS.CAGE_POSITIONS.length; i++) {
-      const c = CONSTANTS.CAGE_POSITIONS[i];
-      const dx = px - c.x;
-      const dy = py - c.y;
-      if (Math.sqrt(dx * dx + dy * dy) < CONSTANTS.CAGE_ZONE_RADIUS * 2) {
+    for (var i = 0; i < CONSTANTS.CAGE_POSITIONS.length; i++) {
+      var c = CONSTANTS.CAGE_POSITIONS[i];
+      var dx = px - c.x;
+      var dy = py - c.y;
+      if (Math.sqrt(dx * dx + dy * dy) < CONSTANTS.CAGE_ZONE_RADIUS * 2.5) {
         return i;
       }
     }
