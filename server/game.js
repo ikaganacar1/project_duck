@@ -182,6 +182,7 @@ class Game {
       cage.prisoners = [];
       cage.rescueProgress = 0;
       this.io.emit('game:rescued', { cageIndex });
+      console.log("game:rescued")
     }
   }
 

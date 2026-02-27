@@ -81,9 +81,9 @@ class GameScene extends Phaser.Scene {
 
     // --- CENTER COUNTER (struggle + rescue) ---
     this.centerCounter = this.add.text(812 / 2, 375 / 2, '', {
-      fontSize: '28px', color: '#ffffff', fontStyle: 'bold',
+      fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
       backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1003).setVisible(false);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(999).setVisible(false);
 
     // --- TAP ANYWHERE: struggle when carried, rescue when near cage ---
     this.input.on('pointerdown', function() {
@@ -97,6 +97,7 @@ class GameScene extends Phaser.Scene {
         if (nearCage !== null && this.latestState.cages[nearCage].prisoners.length > 0) {
           window.network.emit('rescue', { cageIndex: nearCage });
           this.cameras.main.flash(50, 100, 255, 100, false);
+          console.log("rescue signal emit")
         }
       }
     }, this);
