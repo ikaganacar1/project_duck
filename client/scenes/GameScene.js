@@ -79,33 +79,40 @@ class GameScene extends Phaser.Scene {
       backgroundColor: '#00000088', padding: { x: 12, y: 4 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
-    // --- ACTION BUTTON (struggle / rescue) ---
-    this.actionBtn = this.add.text(812 - 90, 375 - 70, '', {
+    // --- RESCUE BUTTON (only for cage rescue) ---
+    this.rescueBtn = this.add.text(812 - 90, 375 - 70, '', {
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#cc3333', padding: { x: 16, y: 12 },
+      backgroundColor: '#33aa33', padding: { x: 16, y: 12 },
       align: 'center',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setVisible(false)
       .setInteractive({ useHandCursor: true });
 
-    this.actionBtn.on('pointerdown', function() {
+    this.rescueBtn.on('pointerdown', function() {
+      var me = this.latestState?.players?.[window.network.id];
+      if (!me || me.state !== 'free' || me.team !== 'runner') return;
+      var nearCage = this.findNearestCage(me.x, me.y);
+      if (nearCage !== null) {
+        window.network.emit('rescue', { cageIndex: nearCage });
+        this.rescueBtn.setBackgroundColor('#66cc66');
+        this.time.delayedCall(100, function() {
+          this.rescueBtn.setBackgroundColor('#33aa33');
+        }, [], this);
+      }
+    }, this);
+
+    // --- STRUGGLE: tap anywhere on screen when carried ---
+    this.struggleCounter = this.add.text(812 / 2, 375 / 2, '', {
+      fontSize: '28px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1003).setVisible(false);
+
+    this.input.on('pointerdown', function() {
       var me = this.latestState?.players?.[window.network.id];
       if (!me) return;
       if (me.state === 'carried') {
         window.network.emit('struggle', {});
-        // Visual feedback
-        this.actionBtn.setBackgroundColor('#ff6666');
-        this.time.delayedCall(100, function() {
-          this.actionBtn.setBackgroundColor('#cc3333');
-        }, [], this);
-      } else if (me.state === 'free' && me.team === 'runner') {
-        var nearCage = this.findNearestCage(me.x, me.y);
-        if (nearCage !== null) {
-          window.network.emit('rescue', { cageIndex: nearCage });
-          this.actionBtn.setBackgroundColor('#66cc66');
-          this.time.delayedCall(100, function() {
-            this.actionBtn.setBackgroundColor('#33aa33');
-          }, [], this);
-        }
+        // Flash effect
+        this.cameras.main.flash(50, 255, 100, 100, false);
       }
     }, this);
 
@@ -247,30 +254,50 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    // Action button logic
+    // UI logic
     var meState = state.players[myId];
     if (meState) {
       if (meState.state === 'carried') {
-        this.actionBtn.setVisible(true);
-        this.actionBtn.setText('DEBEN!\n(' + Math.floor(state.players[myId].struggleCount || 0) + '/' + CONSTANTS.STRUGGLE_THRESHOLD + ')');
-        this.actionBtn.setBackgroundColor('#cc3333');
-        this.statusText.setText('Yakalandin!');
+        // Show struggle counter in center
+        var count = Math.floor(meState.struggleCount || 0);
+        this.struggleCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
+        this.struggleCounter.setVisible(true);
+        this.rescueBtn.setVisible(false);
+        this.statusText.setText('Yakalandin! Ekrana tikla!');
       } else if (meState.state === 'caged') {
-        this.actionBtn.setVisible(false);
+        this.struggleCounter.setVisible(false);
+        this.rescueBtn.setVisible(false);
         this.statusText.setText('Kafestesin! Bekle...');
-      } else if (meState.state === 'free' && meState.team === 'runner') {
-        var nearCage = this.findNearestCage(meState.x, meState.y);
-        if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
-          this.actionBtn.setVisible(true);
-          this.actionBtn.setText('KURTAR!\n(' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD + ')');
-          this.actionBtn.setBackgroundColor('#33aa33');
+      } else if (meState.state === 'free') {
+        this.struggleCounter.setVisible(false);
+        // Immunity indicator
+        if (meState.immune) {
+          this.statusText.setText('IMMUNE!');
         } else {
-          this.actionBtn.setVisible(false);
+          this.statusText.setText('');
         }
-        this.statusText.setText('');
+        // Rescue button for runners near cage
+        if (meState.team === 'runner') {
+          var nearCage = this.findNearestCage(meState.x, meState.y);
+          if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
+            this.rescueBtn.setVisible(true);
+            this.rescueBtn.setText('KURTAR!\n(' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD + ')');
+          } else {
+            this.rescueBtn.setVisible(false);
+          }
+        } else {
+          this.rescueBtn.setVisible(false);
+        }
       } else {
-        this.actionBtn.setVisible(false);
+        this.struggleCounter.setVisible(false);
+        this.rescueBtn.setVisible(false);
         this.statusText.setText('');
+      }
+
+      // Immune player visual: blink effect
+      var mySprU = this.playerSprites[myId];
+      if (mySprU && meState.immune) {
+        mySprU.container.setAlpha(0.5 + Math.sin(this.time.now / 100) * 0.5);
       }
     }
   }

@@ -31,6 +31,7 @@ class Game {
         carriedBy: null,
         inBush: false,
         struggleCount: 0,
+        immuneUntil: 0,
       });
     }
 
@@ -134,13 +135,6 @@ class Game {
     this.checkCaptures();
     this.checkCageDeposit();
 
-    for (const [id, p] of this.players) {
-      if (p.state === 'carried' && p.struggleCount > 0) {
-        p.struggleCount -= 1 / C.TICK_RATE;
-        if (p.struggleCount < 0) p.struggleCount = 0;
-      }
-    }
-
     this.checkInstantWin();
     this.broadcastState();
   }
@@ -159,7 +153,7 @@ class Game {
 
     player.struggleCount++;
     if (player.struggleCount >= C.STRUGGLE_THRESHOLD) {
-      this.freePlayer(socketId);
+      this.freePlayer(socketId, true);
       this.io.emit('game:freed', { playerId: socketId });
     }
   }
@@ -195,8 +189,9 @@ class Game {
     const hunters = [...this.players.entries()].filter(
       ([id, p]) => p.team === 'hunter' && p.state === 'free' && !this.isCarrying(id)
     );
+    const now = Date.now();
     const runners = [...this.players.entries()].filter(
-      ([, p]) => p.team === 'runner' && p.state === 'free'
+      ([, p]) => p.team === 'runner' && p.state === 'free' && now >= p.immuneUntil
     );
 
     for (const [hId, h] of hunters) {
@@ -258,12 +253,15 @@ class Game {
     }
   }
 
-  freePlayer(playerId) {
+  freePlayer(playerId, grantImmunity) {
     const player = this.players.get(playerId);
     if (!player) return;
     player.state = 'free';
     player.carriedBy = null;
     player.struggleCount = 0;
+    if (grantImmunity) {
+      player.immuneUntil = Date.now() + C.IMMUNITY_DURATION;
+    }
   }
 
   checkInstantWin() {
@@ -287,6 +285,7 @@ class Game {
         inBush: p.inBush,
         name: p.name,
         struggleCount: p.struggleCount,
+        immune: Date.now() < p.immuneUntil,
       };
     }
     this.io.emit('game:state', {
