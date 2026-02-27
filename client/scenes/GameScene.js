@@ -80,10 +80,10 @@ class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
     // --- CENTER COUNTER (struggle + rescue) ---
-    this.centerCounter = this.add.text(812 / 2, 375 / 2, '', {
+    this.centerCounter = this.add.text(812 / 2, 375 / 2, ' ', {
       fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
       backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(999).setVisible(false);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1010).setAlpha(0);
 
     // --- TAP ANYWHERE: struggle when carried, rescue when near cage ---
     this.input.on('pointerdown', function() {
@@ -247,10 +247,10 @@ class GameScene extends Phaser.Scene {
         var count = Math.floor(meState.struggleCount || 0);
         this.centerCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
         this.centerCounter.setBackgroundColor('#cc333399');
-        this.centerCounter.setVisible(true);
+        this.centerCounter.setAlpha(1);
         this.statusText.setText('Yakalandin! Ekrana tikla!');
       } else if (meState.state === 'caged') {
-        this.centerCounter.setVisible(false);
+        this.centerCounter.setAlpha(0);
         this.statusText.setText('Kafestesin! Bekle...');
       } else if (meState.state === 'free') {
         // Immunity indicator
@@ -265,18 +265,18 @@ class GameScene extends Phaser.Scene {
           if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
             this.centerCounter.setText('KURTAR! ' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD);
             this.centerCounter.setBackgroundColor('#33aa3399');
-            this.centerCounter.setVisible(true);
+            this.centerCounter.setAlpha(1);
             if (!meState.immune) {
               this.statusText.setText('Kafese yakin! Tikla!');
             }
           } else {
-            this.centerCounter.setVisible(false);
+            this.centerCounter.setAlpha(0);
           }
         } else {
-          this.centerCounter.setVisible(false);
+          this.centerCounter.setAlpha(0);
         }
       } else {
-        this.centerCounter.setVisible(false);
+        this.centerCounter.setAlpha(0);
         this.statusText.setText('');
       }
 
