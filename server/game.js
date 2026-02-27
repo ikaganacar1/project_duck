@@ -152,7 +152,6 @@ class Game {
     if (!player || player.state !== 'carried') return;
 
     player.struggleCount++;
-    console.log('struggle:', player.struggleCount, '/', C.STRUGGLE_THRESHOLD);
     if (player.struggleCount >= C.STRUGGLE_THRESHOLD) {
       this.freePlayer(socketId, true);
       this.io.emit('game:freed', { playerId: socketId });
@@ -161,27 +160,16 @@ class Game {
 
   handleRescue(socketId, cageIndex) {
     const player = this.players.get(socketId);
-    if (!player || player.team !== 'runner' || player.state !== 'free') {
-      console.log('rescue rejected: player check failed', { socketId, team: player?.team, state: player?.state });
-      return;
-    }
+    if (!player || player.team !== 'runner' || player.state !== 'free') return;
 
     const cage = this.cages[cageIndex];
-    if (!cage || cage.prisoners.length === 0) {
-      console.log('rescue rejected: cage check failed', { cageIndex, prisoners: cage?.prisoners?.length });
-      return;
-    }
+    if (!cage || cage.prisoners.length === 0) return;
 
     const dx = player.x - cage.x;
     const dy = player.y - cage.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > C.CAGE_ZONE_RADIUS * 2.5) {
-      console.log('rescue rejected: too far', { dist, max: C.CAGE_ZONE_RADIUS * 2.5 });
-      return;
-    }
+    if (Math.sqrt(dx * dx + dy * dy) > C.CAGE_ZONE_RADIUS * 2.5) return;
 
     cage.rescueProgress++;
-    console.log('rescue progress:', cage.rescueProgress, '/', C.CAGE_RESCUE_THRESHOLD);
     if (cage.rescueProgress >= C.CAGE_RESCUE_THRESHOLD) {
       for (const prisonerId of cage.prisoners) {
         const prisoner = this.players.get(prisonerId);
@@ -194,7 +182,6 @@ class Game {
       cage.prisoners = [];
       cage.rescueProgress = 0;
       this.io.emit('game:rescued', { cageIndex });
-      console.log("game:rescued")
     }
   }
 

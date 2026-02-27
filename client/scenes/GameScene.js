@@ -80,39 +80,23 @@ class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
     // --- CENTER COUNTER (struggle + rescue) ---
-    this.centerCounter = this.add.text(812 / 2, 375 / 2, 'CENTER TEST', {
+    this.centerCounter = this.add.text(812 / 2, 375 / 2, ' ', {
       fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
       backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1010);
-
-    // TEST: hide after 5 seconds to verify rendering works
-    this.time.delayedCall(5000, function() {
-      this.centerCounter.setAlpha(0);
-    }, [], this);
-
-    // --- DEBUG HUD ---
-    this.debugText = this.add.text(10, 70, 'DEBUG INIT', {
-      fontSize: '10px', color: '#00ff00',
-      backgroundColor: '#00000088', padding: { x: 3, y: 1 },
-    }).setScrollFactor(0).setDepth(9999);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1010).setAlpha(0);
 
     // --- TAP ANYWHERE: struggle when carried, rescue when near cage ---
-    this.input.on('pointerdown', function(ptr) {
-      var myId = window.network.id;
-      var me = this.latestState?.players?.[myId];
-      console.log('TAP', { myId: myId, hasState: !!this.latestState, me: me ? { state: me.state, team: me.team, x: Math.round(me.x), y: Math.round(me.y) } : null });
+    this.input.on('pointerdown', function() {
+      var me = this.latestState?.players?.[window.network.id];
       if (!me) return;
       if (me.state === 'carried') {
         window.network.emit('struggle', {});
         this.cameras.main.flash(50, 255, 100, 100, false);
-        console.log('STRUGGLE sent');
       } else if (me.state === 'free' && me.team === 'runner') {
         var nearCage = this.findNearestCage(me.x, me.y);
-        console.log('RESCUE check', { nearCage: nearCage, cages: this.latestState.cages.map(function(c) { return { prisoners: c.prisoners.length, rp: c.rescueProgress }; }) });
         if (nearCage !== null && this.latestState.cages[nearCage].prisoners.length > 0) {
           window.network.emit('rescue', { cageIndex: nearCage });
           this.cameras.main.flash(50, 100, 255, 100, false);
-          console.log('RESCUE sent', { cageIndex: nearCage });
         }
       }
     }, this);
@@ -257,16 +241,6 @@ class GameScene extends Phaser.Scene {
 
     // UI logic
     var meState = state.players[myId];
-    // Debug: show player state on screen
-    if (meState) {
-      this.debugText.setText(
-        'ID:' + (myId || 'null').substring(0, 8) +
-        ' S:' + meState.state + ' T:' + meState.team +
-        ' X:' + Math.round(meState.x) + ' Y:' + Math.round(meState.y)
-      );
-    } else {
-      this.debugText.setText('NO PLAYER DATA for ID:' + (myId || 'null'));
-    }
     if (meState) {
       if (meState.state === 'carried') {
         var count = Math.floor(meState.struggleCount || 0);
@@ -361,19 +335,14 @@ class GameScene extends Phaser.Scene {
   }
 
   findNearestCage(px, py) {
-    var minDist = Infinity;
-    var minIdx = -1;
     for (var i = 0; i < CONSTANTS.CAGE_POSITIONS.length; i++) {
       var c = CONSTANTS.CAGE_POSITIONS[i];
       var dx = px - c.x;
       var dy = py - c.y;
-      var d = Math.sqrt(dx * dx + dy * dy);
-      if (d < minDist) { minDist = d; minIdx = i; }
-      if (d < CONSTANTS.CAGE_ZONE_RADIUS * 2.5) {
+      if (Math.sqrt(dx * dx + dy * dy) < CONSTANTS.CAGE_ZONE_RADIUS * 2.5) {
         return i;
       }
     }
-    console.log('findNearestCage: closest cage #' + minIdx + ' dist=' + Math.round(minDist) + ' threshold=' + (CONSTANTS.CAGE_ZONE_RADIUS * 2.5));
     return null;
   }
 }
