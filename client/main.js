@@ -5,8 +5,8 @@ const config = {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  backgroundColor: '#2d5a1b',
-  scene: [],
+  backgroundColor: '#1a3a0a',
+  scene: [BootScene, LobbyScene, GameScene, ResultScene],
 };
 
 const game = new Phaser.Game(config);
