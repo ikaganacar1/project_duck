@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const Lobby = require('./lobby');
+const Game = require('./game');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,19 +15,27 @@ app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
 const PORT = process.env.PORT || 3000;
 
 const lobby = new Lobby(io);
-let gameActive = false;
+let game = null;
+
+function returnToLobby() {
+  game = null;
+  lobby.clear();
+  console.log('Returned to lobby');
+}
 
 lobby.onGameStart = (playerEntries) => {
   console.log('Game starting with', playerEntries.length, 'players');
-  gameActive = true;
-  // Game initialization will be wired in Task 5
+  game = new Game(io, playerEntries, () => {
+    setTimeout(returnToLobby, 5000);
+  });
+  game.start();
 };
 
 io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
 
   socket.on('join', ({ name }) => {
-    if (gameActive) {
+    if (game) {
       socket.emit('lobby:gameInProgress');
       return;
     }
@@ -34,12 +43,27 @@ io.on('connection', (socket) => {
   });
 
   socket.on('ready', ({ ready }) => {
+    if (game) return;
     lobby.setReady(socket.id, ready);
+  });
+
+  socket.on('input', (data) => {
+    if (game) game.handleInput(socket.id, data);
+  });
+
+  socket.on('struggle', () => {
+    if (game) game.handleStruggle(socket.id);
+  });
+
+  socket.on('rescue', ({ cageIndex }) => {
+    if (game) game.handleRescue(socket.id, cageIndex);
   });
 
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
-    if (!gameActive) {
+    if (game && game.hasPlayer(socket.id)) {
+      game.handleDisconnect(socket.id);
+    } else {
       lobby.removePlayer(socket.id);
     }
   });
@@ -48,5 +72,3 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-module.exports = { io, lobby };
