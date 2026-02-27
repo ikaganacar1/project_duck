@@ -1,0 +1,29 @@
+const CONSTANTS = {
+  MAP_RADIUS: 2000,
+  WORLD_SIZE: 4000,
+  TICK_RATE: 20,
+  TICK_INTERVAL: 50,
+  PLAYER_SPEED: 200,
+  HUNTER_CARRY_SPEED_MULT: 0.6,
+  CAPTURE_DISTANCE: 50,
+  STRUGGLE_THRESHOLD: 10,
+  CAGE_RESCUE_THRESHOLD: 15,
+  GAME_DURATION: 180,
+  BUSH_VISIBILITY_DISTANCE: 150,
+  MIN_PLAYERS: 4,
+  MAX_PLAYERS: 8,
+  RECONNECT_WINDOW: 10000,
+  CAGE_POSITIONS: [
+    { x: 0, y: -1500 },
+    { x: 0, y: 1500 },
+    { x: 1500, y: 0 },
+    { x: -1500, y: 0 },
+  ],
+  CAGE_ZONE_RADIUS: 80,
+  HUNTER_SPAWN_DISTANCE: 1500,
+  RUNNER_SPAWN_RADIUS: 300,
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = CONSTANTS;
+}
