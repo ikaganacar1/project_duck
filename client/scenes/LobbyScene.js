@@ -154,8 +154,8 @@ class LobbyScene extends Phaser.Scene {
       window.network.emit('spectate', { name: self.playerName });
     });
 
-    this.spectatorStatusText = this.add.text(606, h - 148, '👁 SEYİRCİ OLARAK\nBEKLİYORSUN', {
-      fontFamily: font, fontSize: '13px', color: '#aaddff', fontStyle: 'bold',
+    this.spectatorStatusText = this.add.text(606, h - 110, '👁 SEYİRCİ\nOYUN BEKLENİYOR', {
+      fontFamily: font, fontSize: '14px', color: '#aaddff', fontStyle: 'bold',
       align: 'center', lineSpacing: 4,
     }).setOrigin(0.5).setAlpha(0);
 
@@ -325,6 +325,8 @@ class LobbyScene extends Phaser.Scene {
         this.load.spritesheet(prefix + k, 'assets/' + folder + '/' + skins[k], { frameWidth: 256, frameHeight: 256 });
       }
       this.load.once('complete', function() {
+        // Bail if player switched to spectator while skins were loading
+        if (!self.myTeam) return;
         // Create animations (keys: hunter-walk-N / runner-walk-N)
         var teamPrefix = self.myTeam === 'hunter' ? 'hunter' : 'runner';
         for (var ai = 0; ai < skins.length; ai++) {

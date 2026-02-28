@@ -111,6 +111,7 @@ io.on('connection', (socket) => {
       game.addSpectator(socket.id);
       socket.emit('game:spectate', game.getFullState());
     } else {
+      lobby.removePlayer(socket.id); // remove from players to avoid duplicate
       lobby.addSpectator(socket, name);
     }
   });
