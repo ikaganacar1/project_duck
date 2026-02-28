@@ -42,7 +42,9 @@ class SpectatorScene extends Phaser.Scene {
     }
 
     // Zoomed out camera to show the whole map
-    var zoom = Math.min(w, h) / (CONSTANTS.MAP_RADIUS * 2 + 120);
+    // Add padding so map doesn't touch screen edges
+    var zoom = Math.min(w, h) / (CONSTANTS.MAP_RADIUS * 2 + 160);
+    this.zoom = zoom;
     this.cameras.main.setZoom(zoom);
     this.cameras.main.centerOn(0, 0);
 
@@ -86,29 +88,27 @@ class SpectatorScene extends Phaser.Scene {
       this.createPlayerSprite(id, this.gameData.players[id]);
     }
 
-    // ── HUD (fixed to screen via separate camera) ──────────────
-    // Use a UI camera at zoom=1 so HUD stays readable
-    this.uiCam = this.cameras.add(0, 0, w, h).setName('ui');
-    this.uiCam.ignore(this.obstacleSprites);
+    // ── HUD ─────────────────────────────────────────────────────
+    // With a zoomed camera, setScrollFactor(0) positions are in screen space
+    // but get scaled by zoom. Compensate: world_pos = screen_pos / zoom,
+    // then setScale(1/zoom) so text appears at normal readable size.
+    var invZ = 1 / zoom;
 
-    this.timerText = this.add.text(10, 10, '', {
+    this.timerText = this.add.text(10 * invZ, 10 * invZ, '', {
       fontFamily: font, fontSize: '20px', color: '#ffffff',
       backgroundColor: '#00000088', padding: { x: 8, y: 4 },
-    }).setScrollFactor(0).setDepth(1000);
+    }).setScrollFactor(0).setScale(invZ).setDepth(1000);
 
-    this.spectatorBadge = this.add.text(w / 2, 10, '👁  SEYİRCİ', {
+    this.spectatorBadge = this.add.text((w / 2) * invZ, 10 * invZ, '👁  SEYİRCİ', {
       fontFamily: font, fontSize: '16px', color: '#ffdd88', fontStyle: 'bold',
       backgroundColor: '#00000088', padding: { x: 10, y: 4 },
-    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1000);
+    }).setOrigin(0.5, 0).setScrollFactor(0).setScale(invZ).setDepth(1000);
 
-    this.playerCountText = this.add.text(w - 10, 10, '', {
+    this.playerCountText = this.add.text((w - 10) * invZ, 10 * invZ, '', {
       fontFamily: font, fontSize: '13px', color: '#ffffff',
       backgroundColor: '#00000088', padding: { x: 8, y: 4 },
       align: 'right',
-    }).setOrigin(1, 0).setScrollFactor(0).setDepth(1000);
-
-    // Ignore HUD in main camera (they stay readable via uiCam)
-    this.cameras.main.ignore([this.timerText, this.spectatorBadge, this.playerCountText]);
+    }).setOrigin(1, 0).setScrollFactor(0).setScale(invZ).setDepth(1000);
 
     // ── Events ──────────────────────────────────────────────────
     this.latestState = null;

@@ -110,19 +110,25 @@ class GameScene extends Phaser.Scene {
     this.joystick = new VirtualJoystick(this);
 
     // HUD
+    var hudFont = 'Fredoka, sans-serif';
+    var teamColor = myTeam === 'hunter' ? '#ff6644' : '#f0c020';
+    var teamLabel = myTeam === 'hunter' ? '🔴 KOVALAYAN' : '🟡 KAÇAN';
+
     this.timerText = this.add.text(10, 10, '', {
-      fontSize: '20px', color: '#ffffff', backgroundColor: '#00000088',
-      padding: { x: 8, y: 4 },
+      fontFamily: hudFont, fontSize: '20px', color: '#ffffff',
+      backgroundColor: '#00000099', padding: { x: 10, y: 5 },
+      fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(999);
 
-    this.teamText = this.add.text(10, 42, myTeam === 'hunter' ? 'KOVALAYAN' : 'KAÇAN', {
-      fontSize: '16px', color: myTeam === 'hunter' ? '#ff4444' : '#f0c020',
-      backgroundColor: '#00000088', padding: { x: 8, y: 4 },
+    this.teamText = this.add.text(10, 44, teamLabel, {
+      fontFamily: hudFont, fontSize: '15px', color: teamColor,
+      backgroundColor: '#00000099', padding: { x: 10, y: 5 },
+      fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(999);
 
     this.statusText = this.add.text(812 / 2, 10, '', {
-      fontSize: '16px', color: '#ff8888', fontStyle: 'bold',
-      padding: { x: 12, y: 4 },
+      fontFamily: hudFont, fontSize: '15px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#cc222299', padding: { x: 12, y: 5 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
     // --- CENTER COUNTER (struggle + rescue) ---
@@ -488,7 +494,7 @@ class GameScene extends Phaser.Scene {
   setStatus(text) {
     this.statusText.setText(text);
     if (text) {
-      this.statusText.setBackgroundColor('#00000088');
+      this.statusText.setBackgroundColor('#cc222299');
     } else {
       this.statusText.setBackgroundColor(null);
     }
