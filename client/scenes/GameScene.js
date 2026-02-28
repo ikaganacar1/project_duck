@@ -7,7 +7,45 @@ class GameScene extends Phaser.Scene {
     this.gameData = data;
   }
 
+  preload() {
+    // Audio
+    var soundMap = { 'sfx-capture': 'capture', 'sfx-cage-rescue': 'cage-rescue', 'sfx-struggle-free': 'struggle-free', 'sfx-caged': 'jail-door' };
+    for (var key in soundMap) {
+      if (!this.cache.audio.exists(key)) this.load.audio(key, 'assets/' + soundMap[key] + '.mp3');
+    }
+
+    // Load any skins not yet loaded (other team or missing)
+    var rSkins = window.runnerSkins || [];
+    var hSkins = window.hunterSkins || [];
+    for (var ri = 0; ri < rSkins.length; ri++) {
+      if (!this.textures.exists('runner-skin-' + ri)) {
+        this.load.spritesheet('runner-skin-' + ri, 'assets/runners/' + rSkins[ri], { frameWidth: 256, frameHeight: 256 });
+      }
+    }
+    for (var hi = 0; hi < hSkins.length; hi++) {
+      if (!this.textures.exists('hunter-skin-' + hi)) {
+        this.load.spritesheet('hunter-skin-' + hi, 'assets/hunters/' + hSkins[hi], { frameWidth: 256, frameHeight: 256 });
+      }
+    }
+  }
+
   create() {
+    // Create any missing skin animations after preload
+    var rSkins = window.runnerSkins || [];
+    var hSkins = window.hunterSkins || [];
+    for (var ri = 0; ri < rSkins.length; ri++) {
+      if (this.textures.exists('runner-skin-' + ri) && !this.anims.exists('runner-walk-' + ri)) {
+        this.anims.create({ key: 'runner-walk-' + ri, frames: this.anims.generateFrameNumbers('runner-skin-' + ri, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'runner-idle-' + ri, frames: [{ key: 'runner-skin-' + ri, frame: 0 }], frameRate: 1 });
+      }
+    }
+    for (var hi2 = 0; hi2 < hSkins.length; hi2++) {
+      if (this.textures.exists('hunter-skin-' + hi2) && !this.anims.exists('hunter-walk-' + hi2)) {
+        this.anims.create({ key: 'hunter-walk-' + hi2, frames: this.anims.generateFrameNumbers('hunter-skin-' + hi2, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'hunter-idle-' + hi2, frames: [{ key: 'hunter-skin-' + hi2, frame: 0 }], frameRate: 1 });
+      }
+    }
+
     var myId = window.network.id;
     var myTeam = this.gameData.players[myId]?.team;
 

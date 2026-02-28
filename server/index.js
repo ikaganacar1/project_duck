@@ -16,11 +16,18 @@ const io = new Server(server, {
   transports: ['polling', 'websocket'],
 });
 
-// No-cache headers for all static files
+// Smart caching: versioned assets cached 1 year, HTML no-cache
 app.use(function(req, res, next) {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  if (req.query.v) {
+    // Versioned JS/assets — cache forever (cache-busting via ?v=N)
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (req.path.match(/\.(png|mp3|svg|jpg|webp)$/i)) {
+    // Unversioned assets — cache 1 week
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+  } else {
+    // HTML and everything else — always revalidate
+    res.setHeader('Cache-Control', 'no-cache');
+  }
   next();
 });
 

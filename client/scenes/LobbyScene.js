@@ -270,10 +270,37 @@ class LobbyScene extends Phaser.Scene {
     this.skinLabel.setAlpha(1);
     var skins = this.myTeam === 'hunter' ? window.hunterSkins : window.runnerSkins;
     var prefix = this.myTeam === 'hunter' ? 'hunter-skin-' : 'runner-skin-';
+    var folder = this.myTeam === 'hunter' ? 'hunters' : 'runners';
     var self = this;
+
+    // Check if skins for this team are loaded yet
+    var allLoaded = skins.length > 0 && this.textures.exists(prefix + '0');
+    if (!allLoaded && skins.length > 0) {
+      // Load skins now and rebuild grid when done
+      this.skinLabel.setText('SKİNLER YÜKLENİYOR...');
+      for (var k = 0; k < skins.length; k++) {
+        this.load.spritesheet(prefix + k, 'assets/' + folder + '/' + skins[k], { frameWidth: 256, frameHeight: 256 });
+      }
+      this.load.once('complete', function() {
+        // Create animations (keys: hunter-walk-N / runner-walk-N)
+        var teamPrefix = self.myTeam === 'hunter' ? 'hunter' : 'runner';
+        for (var ai = 0; ai < skins.length; ai++) {
+          var aKey = prefix + ai;
+          if (self.textures.exists(aKey) && !self.anims.exists(teamPrefix + '-walk-' + ai)) {
+            self.anims.create({ key: teamPrefix + '-walk-' + ai, frames: self.anims.generateFrameNumbers(aKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+            self.anims.create({ key: teamPrefix + '-idle-' + ai, frames: [{ key: aKey, frame: 0 }], frameRate: 1 });
+          }
+        }
+        self.skinLabel.setText('SKİN SEÇ');
+        self.buildSkinGrid();
+      }, this);
+      this.load.start();
+      return;
+    }
+
     var size = 78;
     var gap = 6;
-    var perRow = 4; // both teams: 4x2 grid
+    var perRow = 4;
     var gridW = perRow * size + (perRow - 1) * gap;
     var startX = 421 + (391 - gridW) / 2;
     var startY = 94;
@@ -282,8 +309,7 @@ class LobbyScene extends Phaser.Scene {
 
     // Panel behind skins: light for hunters, dark for runners
     var panelColor = this.myTeam === 'hunter' ? 0xffe0cc : 0x7a3300;
-    var panelAlpha = this.myTeam === 'hunter' ? 0.2 : 0.2;
-    this.skinPanelGraphics.fillStyle(panelColor, panelAlpha);
+    this.skinPanelGraphics.fillStyle(panelColor, 0.2);
     this.skinPanelGraphics.fillRoundedRect(startX - 8, startY - 8, gridW + 16, gridH + 16, 8);
 
     for (var j = 0; j < skins.length; j++) {

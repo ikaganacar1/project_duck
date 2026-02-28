@@ -7,6 +7,15 @@ class ResultScene extends Phaser.Scene {
     this.resultData = data;
   }
 
+  preload() {
+    if (!this.cache.audio.exists('sfx-game-win')) {
+      this.load.audio('sfx-game-win', 'assets/game-win.mp3');
+    }
+    if (!this.cache.audio.exists('sfx-game-lose')) {
+      this.load.audio('sfx-game-lose', 'assets/game-lose.mp3');
+    }
+  }
+
   create() {
     const w = this.cameras.main.width;
     const h = this.cameras.main.height;

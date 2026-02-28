@@ -29,15 +29,8 @@ class BootScene extends Phaser.Scene {
     // Fight effect spritesheet (3 cols x 2 rows, 200x200 per frame)
     this.load.spritesheet('fight-effect', 'assets/fight_effect.png', { frameWidth: 200, frameHeight: 200 });
 
-    // Audio
+    // Only menu music needed at startup — rest loaded per-scene
     this.load.audio('sfx-menu', 'assets/menu-music.mp3');
-    this.load.audio('sfx-game-start', 'assets/game-start.mp3');
-    this.load.audio('sfx-capture', 'assets/capture.mp3');
-    this.load.audio('sfx-cage-rescue', 'assets/cage-rescue.mp3');
-    this.load.audio('sfx-struggle-free', 'assets/struggle-free.mp3');
-    this.load.audio('sfx-game-win', 'assets/game-win.mp3');
-    this.load.audio('sfx-game-lose', 'assets/game-lose.mp3');
-    this.load.audio('sfx-caged', 'assets/jail-door.mp3');
 
     // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
@@ -56,41 +49,15 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Fetch skin lists from server, then continue loading
-    var self = this;
+    // Fetch skin list but don't load textures yet — loaded lazily in LobbyScene
     fetch('/api/skins').then(function(r) { return r.json(); }).then(function(data) {
       window.runnerSkins = data.runners || [];
       window.hunterSkins = data.hunters || [];
-      self.loadAllSkins();
     }).catch(function() {
       window.runnerSkins = [];
       window.hunterSkins = [];
-      self.loadAllSkins();
     });
-  }
-
-  loadAllSkins() {
-    var rSkins = window.runnerSkins;
-    var hSkins = window.hunterSkins;
-    var needsLoad = false;
-
-    for (var i = 0; i < rSkins.length; i++) {
-      this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + rSkins[i], { frameWidth: 256, frameHeight: 256 });
-      needsLoad = true;
-    }
-    for (var j = 0; j < hSkins.length; j++) {
-      this.load.spritesheet('hunter-skin-' + j, 'assets/hunters/' + hSkins[j], { frameWidth: 256, frameHeight: 256 });
-      needsLoad = true;
-    }
-
-    if (needsLoad) {
-      this.load.once('complete', function() {
-        this.afterSkinsLoaded();
-      }, this);
-      this.load.start();
-    } else {
-      this.afterSkinsLoaded();
-    }
+    this.afterSkinsLoaded();
   }
 
   afterSkinsLoaded() {
@@ -140,26 +107,6 @@ class BootScene extends Phaser.Scene {
 
   startGame() {
     this.generateCircleTexture('ground', 0x4a8a2a, 16);
-
-    // Hunter skin animations
-    var hSkins = window.hunterSkins;
-    for (var i = 0; i < hSkins.length; i++) {
-      var hKey = 'hunter-skin-' + i;
-      if (this.textures.exists(hKey)) {
-        this.anims.create({ key: 'hunter-walk-' + i, frames: this.anims.generateFrameNumbers(hKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
-        this.anims.create({ key: 'hunter-idle-' + i, frames: [{ key: hKey, frame: 0 }], frameRate: 1 });
-      }
-    }
-
-    // Runner skin animations
-    var rSkins = window.runnerSkins;
-    for (var j = 0; j < rSkins.length; j++) {
-      var rKey = 'runner-skin-' + j;
-      if (this.textures.exists(rKey)) {
-        this.anims.create({ key: 'runner-walk-' + j, frames: this.anims.generateFrameNumbers(rKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
-        this.anims.create({ key: 'runner-idle-' + j, frames: [{ key: rKey, frame: 0 }], frameRate: 1 });
-      }
-    }
 
     // Fight effect animation (6 frames: 3x2 grid)
     if (this.textures.exists('fight-effect')) {
