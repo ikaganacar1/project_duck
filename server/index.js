@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
@@ -7,6 +8,7 @@ const Lobby = require('./lobby');
 const Game = require('./game');
 
 const app = express();
+app.use(compression());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' },

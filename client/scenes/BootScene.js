@@ -72,11 +72,11 @@ class BootScene extends Phaser.Scene {
     var needsLoad = false;
 
     for (var i = 0; i < rSkins.length; i++) {
-      this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + rSkins[i], { frameWidth: 1024, frameHeight: 1024 });
+      this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + rSkins[i], { frameWidth: 256, frameHeight: 256 });
       needsLoad = true;
     }
     for (var j = 0; j < hSkins.length; j++) {
-      this.load.spritesheet('hunter-skin-' + j, 'assets/hunters/' + hSkins[j], { frameWidth: 1024, frameHeight: 1024 });
+      this.load.spritesheet('hunter-skin-' + j, 'assets/hunters/' + hSkins[j], { frameWidth: 256, frameHeight: 256 });
       needsLoad = true;
     }
 
