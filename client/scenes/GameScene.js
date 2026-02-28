@@ -76,7 +76,7 @@ class GameScene extends Phaser.Scene {
 
     this.statusText = this.add.text(812 / 2, 10, '', {
       fontSize: '16px', color: '#ff8888', fontStyle: 'bold',
-      backgroundColor: '#00000088', padding: { x: 12, y: 4 },
+      padding: { x: 12, y: 4 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
     // --- CENTER COUNTER (struggle + rescue) ---
@@ -258,16 +258,16 @@ class GameScene extends Phaser.Scene {
         this.centerCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
         this.centerCounter.setBackgroundColor('#cc333399');
         this.centerCounter.setAlpha(1);
-        this.statusText.setText('Yakalandin! Ekrana tikla!');
+        this.setStatus('Yakalandin! Ekrana tikla!');
       } else if (meState.state === 'caged') {
         this.centerCounter.setAlpha(0);
-        this.statusText.setText('Kafestesin! Bekle...');
+        this.setStatus('Kafestesin! Bekle...');
       } else if (meState.state === 'free') {
         // Immunity indicator
         if (meState.immune) {
-          this.statusText.setText('IMMUNE!');
+          this.setStatus('IMMUNE!');
         } else {
-          this.statusText.setText('');
+          this.setStatus('');
         }
         // Rescue counter for runners near cage with prisoners
         if (meState.team === 'runner') {
@@ -277,7 +277,7 @@ class GameScene extends Phaser.Scene {
             this.centerCounter.setBackgroundColor('#33aa3399');
             this.centerCounter.setAlpha(1);
             if (!meState.immune) {
-              this.statusText.setText('Kafese yakin! Tikla!');
+              this.setStatus('Kafese yakin! Tikla!');
             }
           } else {
             this.centerCounter.setAlpha(0);
@@ -287,7 +287,7 @@ class GameScene extends Phaser.Scene {
         }
       } else {
         this.centerCounter.setAlpha(0);
-        this.statusText.setText('');
+        this.setStatus('');
       }
 
       // Immune player visual: blink effect
@@ -363,5 +363,14 @@ class GameScene extends Phaser.Scene {
       }
     }
     return null;
+  }
+
+  setStatus(text) {
+    this.statusText.setText(text);
+    if (text) {
+      this.statusText.setBackgroundColor('#00000088');
+    } else {
+      this.statusText.setBackgroundColor(null);
+    }
   }
 }

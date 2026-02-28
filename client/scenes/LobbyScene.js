@@ -4,88 +4,121 @@ class LobbyScene extends Phaser.Scene {
   }
 
   create() {
-    const w = this.cameras.main.width;
-    const h = this.cameras.main.height;
+    var w = this.cameras.main.width;
+    var h = this.cameras.main.height;
+    var font = 'Fredoka, sans-serif';
 
-    this.add.text(w / 2, 40, 'Duck Hunt', {
-      fontSize: '32px',
-      color: '#f0c020',
-      fontStyle: 'bold',
+    // Background gradient
+    var bg = this.add.graphics();
+    bg.fillGradientStyle(0x1a3a0a, 0x1a3a0a, 0x0d1f05, 0x0d1f05, 1);
+    bg.fillRect(0, 0, w, h);
+
+    // Title
+    this.add.text(w / 2, 30, 'DUCK HUNT', {
+      fontFamily: font, fontSize: '36px', color: '#f0c020',
+      fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
     }).setOrigin(0.5);
 
-    this.playerName = 'Player' + Math.floor(Math.random() * 1000);
-    this.nameText = this.add.text(w / 2, 90, 'Name: ' + this.playerName, {
-      fontSize: '18px',
-      color: '#ffffff',
+    // Subtitle
+    this.add.text(w / 2, 62, 'Yakalanmadan hayatta kal!', {
+      fontFamily: font, fontSize: '13px', color: '#88bb66',
     }).setOrigin(0.5);
 
-    this.playerListText = this.add.text(w / 2, 150, 'Connecting...', {
-      fontSize: '16px',
-      color: '#cccccc',
-      align: 'center',
-    }).setOrigin(0.5, 0);
+    // Random name from config
+    var names = CONSTANTS.PLAYER_NAMES;
+    this.playerName = names[Math.floor(Math.random() * names.length)];
 
-    this.isReady = false;
-    this.readyBtn = this.add.text(w / 2, h - 100, '[ HAZIR ]', {
-      fontSize: '28px',
-      color: '#ffffff',
-      backgroundColor: '#444444',
-      padding: { x: 30, y: 15 },
+    // Name display
+    this.nameTag = this.add.text(w / 2, 90, this.playerName, {
+      fontFamily: font, fontSize: '20px', color: '#ffffff',
+      backgroundColor: '#ffffff22', padding: { x: 16, y: 6 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    this.readyBtn.on('pointerdown', () => {
-      this.isReady = !this.isReady;
-      this.readyBtn.setText(this.isReady ? '[ HAZIR V ]' : '[ HAZIR ]');
-      this.readyBtn.setBackgroundColor(this.isReady ? '#2d7a2d' : '#444444');
-      window.network.emit('ready', { ready: this.isReady });
-    });
-
-    this.countdownText = this.add.text(w / 2, h - 160, '', {
-      fontSize: '36px',
-      color: '#ff4444',
-      fontStyle: 'bold',
+    this.add.text(w / 2, 112, 'isim degistirmek icin tikla', {
+      fontFamily: font, fontSize: '9px', color: '#666666',
     }).setOrigin(0.5);
 
+    // Tap name to reroll
+    this.nameTag.on('pointerdown', function() {
+      this.playerName = names[Math.floor(Math.random() * names.length)];
+      this.nameTag.setText(this.playerName);
+    }, this);
+
+    // Player list panel
+    var panelX = w / 2 - 140;
+    var panelW = 280;
+    this.playerPanel = this.add.graphics();
+    this.playerPanel.fillStyle(0x000000, 0.3);
+    this.playerPanel.fillRoundedRect(panelX, 128, panelW, 140, 8);
+
+    this.playerListTitle = this.add.text(w / 2, 138, 'Oyuncular', {
+      fontFamily: font, fontSize: '14px', color: '#f0c020', fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+
+    this.playerListText = this.add.text(w / 2, 158, 'Baglaniliyor...', {
+      fontFamily: font, fontSize: '13px', color: '#cccccc',
+      align: 'center', lineSpacing: 4,
+    }).setOrigin(0.5, 0);
+
+    // Ready button
+    this.isReady = false;
+    this.readyBtn = this.add.text(w / 2, h - 50, 'HAZIR', {
+      fontFamily: font, fontSize: '22px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#555555', padding: { x: 40, y: 10 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.readyBtn.on('pointerdown', function() {
+      this.isReady = !this.isReady;
+      this.readyBtn.setText(this.isReady ? 'HAZIR ✓' : 'HAZIR');
+      this.readyBtn.setBackgroundColor(this.isReady ? '#2d7a2d' : '#555555');
+      window.network.emit('ready', { ready: this.isReady });
+    }, this);
+
+    // Countdown
+    this.countdownText = this.add.text(w / 2, h - 90, '', {
+      fontFamily: font, fontSize: '20px', color: '#ff6644', fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    // Join
     window.network.emit('join', { name: this.playerName });
 
-    window.network.on('lobby:update', ({ players }) => {
-      let text = 'Oyuncular (' + players.length + '/' + CONSTANTS.MAX_PLAYERS + '):\n\n';
-      players.forEach((p) => {
-        const readyMark = p.ready ? ' V' : '';
-        const youMark = p.id === window.network.id ? ' (Sen)' : '';
-        text += p.name + readyMark + youMark + '\n';
-      });
-      if (players.length < CONSTANTS.MIN_PLAYERS) {
-        text += '\nMinimum ' + CONSTANTS.MIN_PLAYERS + ' oyuncu gerekli';
+    // Events
+    window.network.on('lobby:update', function(data) {
+      var players = data.players;
+      this.playerListTitle.setText('Oyuncular (' + players.length + '/' + CONSTANTS.MAX_PLAYERS + ')');
+      var lines = [];
+      for (var i = 0; i < players.length; i++) {
+        var p = players[i];
+        var line = p.name;
+        if (p.ready) line += '  ✓';
+        if (p.id === window.network.id) line += '  (Sen)';
+        lines.push(line);
       }
-      this.playerListText.setText(text);
-    });
+      if (players.length < CONSTANTS.MIN_PLAYERS) {
+        lines.push('');
+        lines.push('Min ' + CONSTANTS.MIN_PLAYERS + ' oyuncu gerekli');
+      }
+      this.playerListText.setText(lines.join('\n'));
+    }.bind(this));
 
-    window.network.on('lobby:countdown', ({ seconds }) => {
-      if (seconds > 0) {
-        this.countdownText.setText('Oyun ' + seconds + ' saniye icinde basliyor!');
+    window.network.on('lobby:countdown', function(data) {
+      if (data.seconds > 0) {
+        this.countdownText.setText('Oyun ' + data.seconds + 's icinde basliyor!');
       } else {
         this.countdownText.setText('');
       }
-    });
+    }.bind(this));
 
-    window.network.on('game:start', (data) => {
+    window.network.on('game:start', function(data) {
       this.scene.start('Game', data);
-    });
+    }.bind(this));
 
-    window.network.on('lobby:full', () => {
+    window.network.on('lobby:full', function() {
       this.playerListText.setText('Lobi dolu!');
-    });
+    }.bind(this));
 
-    window.network.on('lobby:gameInProgress', () => {
-      this.playerListText.setText('Oyun devam ediyor, lutfen bekleyin...');
-    });
-
-    this.scale.on('resize', (gameSize) => {
-      const nw = gameSize.width;
-      const nh = gameSize.height;
-      this.readyBtn.setPosition(nw / 2, nh - 100);
-      this.countdownText.setPosition(nw / 2, nh - 160);
-    });
+    window.network.on('lobby:gameInProgress', function() {
+      this.playerListText.setText('Oyun devam ediyor, bekleyin...');
+    }.bind(this));
   }
 }

@@ -23,6 +23,12 @@ const CONSTANTS = {
   CAGE_ZONE_RADIUS: 80,
   HUNTER_SPAWN_DISTANCE: 750,
   RUNNER_SPAWN_RADIUS: 150,
+  PLAYER_NAMES: [
+    'SerseriOrdek', 'KacakTavuk', 'NinjaKaz', 'ZipZipKurba', 'PanikTavsan',
+    'GizliSincap', 'FirtinaBoga', 'KorkusuzFare', 'UcanPenguen', 'DalgaBalik',
+    'CanliPanda', 'AclikKurdu', 'SakarAyi', 'HizliKaplin', 'CilginMartir',
+    'GolgeAslan', 'TatliFoka', 'YildirimTilki', 'BuzKartal', 'AtesKedi',
+  ],
 };
 
 if (typeof module !== 'undefined' && module.exports) {
