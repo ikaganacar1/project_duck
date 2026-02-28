@@ -45,8 +45,8 @@ class Lobby {
       if (p.team === 'runner') runners++;
     }
 
-    // Balance check: hunters <= runners
-    if (team === 'hunter' && hunters >= runners) {
+    // Balance check: hunters <= runners (only enforce once at least one person has picked a team)
+    if (team === 'hunter' && (hunters > 0 || runners > 0) && hunters >= runners) {
       this.io.to(socketId).emit('lobby:team-rejected', { team });
       return;
     }

@@ -11,81 +11,91 @@ class LobbyScene extends Phaser.Scene {
 
     this.myTeam = null;
     this.mySkin = -1;
+    this.hunterCount = 0;
+    this.runnerCount = 0;
 
-    // Background gradient
+    // ── BACKGROUND ──────────────────────────────────────
     var bg = this.add.graphics();
-    bg.fillGradientStyle(0x1a3a0a, 0x1a3a0a, 0x0d1f05, 0x0d1f05, 1);
+    bg.fillGradientStyle(0x0d1f05, 0x0d1f05, 0x1a0a00, 0x1a0a00, 1);
     bg.fillRect(0, 0, w, h);
 
+    // Divider line
+    var div = this.add.graphics();
+    div.lineStyle(1, 0x334422, 0.6);
+    div.lineBetween(400, 0, 400, h);
+
     // ── LEFT PANEL ──────────────────────────────────────
-    // Title
-    this.add.text(10, 12, 'DUCK HUNT', {
-      fontFamily: font, fontSize: '28px', color: '#f0c020',
-      fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
+    this.add.text(14, 10, 'DUCK HUNT', {
+      fontFamily: font, fontSize: '30px', color: '#f0c020',
+      fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
+    });
+    this.add.text(14, 42, 'Yakalanmadan hayatta kal!', {
+      fontFamily: font, fontSize: '11px', color: '#77aa44',
     });
 
-    this.add.text(10, 42, 'Yakalanmadan hayatta kal!', {
-      fontFamily: font, fontSize: '11px', color: '#88bb66',
-    });
-
-    // Team selection label
-    this.add.text(10, 62, 'Takımını seç:', {
-      fontFamily: font, fontSize: '13px', color: '#cccccc',
-    });
-
-    // AVCI button
-    this.hunterBtn = this.add.text(10, 82, 'AVCI', {
-      fontFamily: font, fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#444444', padding: { x: 16, y: 7 },
-    }).setInteractive({ useHandCursor: true });
-
-    // KAÇAK button
-    this.runnerBtn = this.add.text(100, 82, 'KAÇAK', {
-      fontFamily: font, fontSize: '18px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#444444', padding: { x: 16, y: 7 },
-    }).setInteractive({ useHandCursor: true });
-
-    this.teamRejectText = this.add.text(200, 88, '', {
-      fontFamily: font, fontSize: '11px', color: '#ff6644',
-    });
-
-    // Player list panel
-    var panelBg = this.add.graphics();
-    panelBg.fillStyle(0x000000, 0.3);
-    panelBg.fillRoundedRect(5, 130, 370, 230, 6);
-
-    this.playerListTitle = this.add.text(185, 138, 'Oyuncular', {
-      fontFamily: font, fontSize: '13px', color: '#f0c020', fontStyle: 'bold',
+    // Team count header
+    this.teamHeader = this.add.text(200, 62, '', {
+      fontFamily: font, fontSize: '13px', color: '#cccccc', align: 'center',
     }).setOrigin(0.5, 0);
 
-    this.playerListText = this.add.text(185, 158, 'Baglaniliyor...', {
-      fontFamily: font, fontSize: '12px', color: '#cccccc',
-      align: 'center', lineSpacing: 4, wordWrap: { width: 360 },
+    // Player list background
+    var listBg = this.add.graphics();
+    listBg.fillStyle(0x000000, 0.35);
+    listBg.fillRoundedRect(8, 82, 385, 200, 8);
+
+    this.playerListTitle = this.add.text(200, 90, 'Oyuncular', {
+      fontFamily: font, fontSize: '12px', color: '#aaaaaa', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
-    // Countdown text
-    this.countdownText = this.add.text(185, 340, '', {
-      fontFamily: font, fontSize: '16px', color: '#ff6644', fontStyle: 'bold',
+    this.playerListText = this.add.text(200, 108, 'Bağlanılıyor...', {
+      fontFamily: font, fontSize: '13px', color: '#dddddd',
+      align: 'center', lineSpacing: 6,
+    }).setOrigin(0.5, 0);
+
+    // ── TEAM JOIN BUTTONS (below player list) ──────────
+    this.hunterBtn = this.add.text(103, 298, 'AVCI TAKIM', {
+      fontFamily: font, fontSize: '15px', fontStyle: 'bold',
+      color: '#ffaaaa', backgroundColor: '#5a1a1a',
+      padding: { x: 18, y: 10 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.runnerBtn = this.add.text(297, 298, 'KAÇAK TAKIM', {
+      fontFamily: font, fontSize: '15px', fontStyle: 'bold',
+      color: '#ffffaa', backgroundColor: '#4a3a00',
+      padding: { x: 18, y: 10 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.hunterBtn.on('pointerover', function() { if (!self._hunterFull) self.hunterBtn.setAlpha(0.8); });
+    this.hunterBtn.on('pointerout', function() { self.hunterBtn.setAlpha(self._hunterFull ? 0.35 : 1); });
+    this.hunterBtn.on('pointerdown', function() { if (!self._hunterFull) window.network.emit('team:select', { team: 'hunter' }); });
+
+    this.runnerBtn.on('pointerover', function() { self.runnerBtn.setAlpha(0.8); });
+    this.runnerBtn.on('pointerout', function() { self.runnerBtn.setAlpha(1); });
+    this.runnerBtn.on('pointerdown', function() { window.network.emit('team:select', { team: 'runner' }); });
+
+    // Countdown
+    this.countdownText = this.add.text(200, 340, '', {
+      fontFamily: font, fontSize: '15px', color: '#ff9944', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
     // ── RIGHT PANEL ──────────────────────────────────────
-    var rx = 420; // right panel start x
+    var rx = 415;
 
     // Name
+    this.add.text(rx, 10, 'İSMİN', {
+      fontFamily: font, fontSize: '10px', color: '#888888', fontStyle: 'bold',
+    });
+
     var names = CONSTANTS.PLAYER_NAMES;
     this.playerName = names[Math.floor(Math.random() * names.length)];
 
-    this.add.text(rx, 12, 'İsmin:', {
-      fontFamily: font, fontSize: '12px', color: '#aaaaaa',
-    });
-
-    this.nameTag = this.add.text(rx, 30, this.playerName, {
-      fontFamily: font, fontSize: '19px', color: '#ffffff',
-      backgroundColor: '#ffffff22', padding: { x: 12, y: 5 },
+    this.nameTag = this.add.text(rx, 24, this.playerName, {
+      fontFamily: font, fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#ffffff18', padding: { x: 14, y: 6 },
     }).setInteractive({ useHandCursor: true });
 
-    this.add.text(rx, 58, 'değiştirmek için tikla', {
-      fontFamily: font, fontSize: '9px', color: '#555555',
+    this.add.text(rx, 55, 'değiştirmek için tıkla', {
+      fontFamily: font, fontSize: '9px', color: '#444444',
     });
 
     this.nameTag.on('pointerdown', function() {
@@ -94,38 +104,39 @@ class LobbyScene extends Phaser.Scene {
       window.network.emit('name:update', { name: self.playerName });
     });
 
-    // Skin label
-    this.skinLabel = this.add.text(rx, 80, 'Skin seç:', {
-      fontFamily: font, fontSize: '12px', color: '#aaaaaa',
+    // Skin section
+    this.skinLabel = this.add.text(rx, 74, 'SKİN SEÇ', {
+      fontFamily: font, fontSize: '10px', color: '#888888', fontStyle: 'bold',
     }).setAlpha(0);
 
-    // Skin grid (will be populated when team is selected)
     this.skinSprites = [];
     this.skinSelectionGraphics = this.add.graphics();
 
     // Ready button
     this.isReady = false;
-    this.readyBtn = this.add.text(605, h - 48, 'HAZIR', {
-      fontFamily: font, fontSize: '22px', color: '#888888', fontStyle: 'bold',
-      backgroundColor: '#333333', padding: { x: 36, y: 10 },
+    this.readyBtn = this.add.text(606, h - 38, 'HAZIR DEĞİL', {
+      fontFamily: font, fontSize: '17px', color: '#666666', fontStyle: 'bold',
+      backgroundColor: '#222222', padding: { x: 28, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.readyBtn.on('pointerdown', function() {
       if (!self.myTeam) return;
       self.isReady = !self.isReady;
-      self.readyBtn.setText(self.isReady ? 'HAZIR ✓' : 'HAZIR');
-      self.readyBtn.setBackgroundColor(self.isReady ? '#2d7a2d' : '#333333');
-      self.readyBtn.setColor(self.isReady ? '#ffffff' : '#888888');
+      self.readyBtn.setText(self.isReady ? '✓ HAZIR' : 'HAZIR DEĞİL');
+      self.readyBtn.setStyle({
+        color: self.isReady ? '#00ff88' : '#aaaaaa',
+        backgroundColor: self.isReady ? '#0a4422' : '#222222',
+      });
       window.network.emit('ready', { ready: self.isReady });
     });
 
-    // ── TEAM BUTTON HANDLERS ──────────────────────────────
-    this.hunterBtn.on('pointerdown', function() {
-      window.network.emit('team:select', { team: 'hunter' });
-    });
-    this.runnerBtn.on('pointerdown', function() {
-      window.network.emit('team:select', { team: 'runner' });
-    });
+    // ── POPUP for team rejected ──────────────────────────
+    this.popupBg = this.add.graphics().setDepth(500).setAlpha(0);
+    this.popupText = this.add.text(w / 2, h / 2, '', {
+      fontFamily: font, fontSize: '22px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#cc2200dd', padding: { x: 28, y: 14 },
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(501).setAlpha(0);
 
     // ── MENU MUSIC ──────────────────────────────────────
     if (!this.sound.get('sfx-menu')) {
@@ -133,22 +144,39 @@ class LobbyScene extends Phaser.Scene {
     } else {
       this.menuMusic = this.sound.get('sfx-menu');
     }
-    if (!this.menuMusic.isPlaying) {
-      this.menuMusic.play();
-    }
+    if (!this.menuMusic.isPlaying) this.menuMusic.play();
 
     // ── JOIN ──────────────────────────────────────────────
     window.network.emit('join', { name: this.playerName });
 
-    // ── SOCKET EVENTS ──────────────────────────────────────
+    // ── SOCKET EVENTS ────────────────────────────────────
     window.network.on('lobby:update', function(data) {
       var players = data.players;
-      self.playerListTitle.setText('Oyuncular (' + players.length + '/' + CONSTANTS.MAX_PLAYERS + ')');
-
-      // Find my team from server data
+      var hCount = 0;
+      var rCount = 0;
       for (var i = 0; i < players.length; i++) {
-        if (players[i].id === window.network.id) {
-          var serverTeam = players[i].team;
+        if (players[i].team === 'hunter') hCount++;
+        if (players[i].team === 'runner') rCount++;
+      }
+      self.hunterCount = hCount;
+      self.runnerCount = rCount;
+
+      // Header
+      self.teamHeader.setText(
+        '🔴 AVCILAR: ' + hCount + '    🟡 KAÇAKLAR: ' + rCount
+      );
+
+      // Hunter button dimmed if full
+      self._hunterFull = hCount >= rCount && (hCount > 0 || rCount > 0);
+      self.hunterBtn.setAlpha(self._hunterFull ? 0.3 : 1);
+
+      // Title
+      self.playerListTitle.setText('OYUNCULAR (' + players.length + '/' + CONSTANTS.MAX_PLAYERS + ')');
+
+      // Find my team from server
+      for (var j = 0; j < players.length; j++) {
+        if (players[j].id === window.network.id) {
+          var serverTeam = players[j].team;
           if (serverTeam !== self.myTeam) {
             self.myTeam = serverTeam;
             self.updateTeamButtons();
@@ -158,32 +186,24 @@ class LobbyScene extends Phaser.Scene {
         }
       }
 
-      // Count teams for button labels
-      var hCount = players.filter(function(p) { return p.team === 'hunter'; }).length;
-      var rCount = players.filter(function(p) { return p.team === 'runner'; }).length;
-      self.hunterBtn.setText('AVCI (' + hCount + ')');
-      self.runnerBtn.setText('KAÇAK (' + rCount + ')');
-
-      // Build player list
+      // Player list
       var lines = [];
-      for (var j = 0; j < players.length; j++) {
-        var p = players[j];
-        var teamBadge = p.team === 'hunter' ? ' [AVCI]' : p.team === 'runner' ? ' [KAÇAK]' : ' [?]';
-        var readyBadge = p.ready ? ' ✓' : '';
-        var meBadge = p.id === window.network.id ? ' (Sen)' : '';
-        lines.push(p.name + teamBadge + readyBadge + meBadge);
+      for (var k = 0; k < players.length; k++) {
+        var p = players[k];
+        var badge = p.team === 'hunter' ? '🔴' : p.team === 'runner' ? '🟡' : '⚪';
+        var ready = p.ready ? ' ✓' : '';
+        var me = p.id === window.network.id ? ' ← sen' : '';
+        lines.push(badge + ' ' + p.name + ready + me);
       }
       if (players.length < CONSTANTS.MIN_PLAYERS) {
         lines.push('');
-        lines.push('Min ' + CONSTANTS.MIN_PLAYERS + ' oyuncu gerekli');
+        lines.push('min ' + CONSTANTS.MIN_PLAYERS + ' oyuncu gerekli');
       }
       self.playerListText.setText(lines.join('\n'));
     });
 
-    window.network.on('lobby:team-rejected', function(data) {
-      var msg = data.team === 'hunter' ? 'Avcı takımı dolu!' : 'Kaçak takımı dolu!';
-      self.teamRejectText.setText(msg);
-      self.time.delayedCall(2000, function() { self.teamRejectText.setText(''); });
+    window.network.on('lobby:team-rejected', function() {
+      self.showPopup('Avcı takımı dolu! Önce kaçak seç.');
     });
 
     window.network.on('lobby:countdown', function(data) {
@@ -208,55 +228,64 @@ class LobbyScene extends Phaser.Scene {
     });
   }
 
-  updateTeamButtons() {
-    var hunterColor = this.myTeam === 'hunter' ? '#ff4444' : '#ffffff';
-    var hunterBg = this.myTeam === 'hunter' ? '#883300' : '#444444';
-    var runnerColor = this.myTeam === 'runner' ? '#f0c020' : '#ffffff';
-    var runnerBg = this.myTeam === 'runner' ? '#664400' : '#444444';
-    this.hunterBtn.setColor(hunterColor).setBackgroundColor(hunterBg);
-    this.runnerBtn.setColor(runnerColor).setBackgroundColor(runnerBg);
+  showPopup(msg) {
+    var self = this;
+    this.popupText.setText(msg).setAlpha(1).setScale(0.7);
+    this.tweens.add({
+      targets: this.popupText, scale: 1, duration: 200, ease: 'Back.easeOut',
+    });
+    if (this._popupTimer) this._popupTimer.remove();
+    this._popupTimer = this.time.delayedCall(2000, function() {
+      self.tweens.add({
+        targets: self.popupText, alpha: 0, duration: 400, ease: 'Quad.easeIn',
+      });
+    });
+  }
 
-    // Enable ready button style once team chosen
+  updateTeamButtons() {
+    // Highlight the selected team button
+    if (this.myTeam === 'hunter') {
+      this.hunterBtn.setStyle({ color: '#ff6666', backgroundColor: '#881111' });
+      this.runnerBtn.setStyle({ color: '#ffffaa', backgroundColor: '#4a3a00' });
+    } else if (this.myTeam === 'runner') {
+      this.runnerBtn.setStyle({ color: '#ffee44', backgroundColor: '#886600' });
+      this.hunterBtn.setStyle({ color: '#ffaaaa', backgroundColor: '#5a1a1a' });
+    }
+    // Unlock ready button
     if (this.myTeam && !this.isReady) {
-      this.readyBtn.setColor('#ffffff').setBackgroundColor('#555555');
+      this.readyBtn.setStyle({ color: '#aaaaaa', backgroundColor: '#333333' });
+      this.readyBtn.setText('HAZIR DEĞİL');
     }
   }
 
   buildSkinGrid() {
-    // Destroy old skin sprites
     for (var i = 0; i < this.skinSprites.length; i++) {
       this.skinSprites[i].destroy();
     }
     this.skinSprites = [];
     this.skinSelectionGraphics.clear();
 
-    if (!this.myTeam) {
-      this.skinLabel.setAlpha(0);
-      return;
-    }
+    if (!this.myTeam) { this.skinLabel.setAlpha(0); return; }
 
     this.skinLabel.setAlpha(1);
-
     var skins = this.myTeam === 'hunter' ? window.hunterSkins : window.runnerSkins;
     var prefix = this.myTeam === 'hunter' ? 'hunter-skin-' : 'runner-skin-';
     var self = this;
-    var startX = 420;
-    var startY = 100;
-    var size = 58;
-    var gap = 6;
-    var perRow = 6;
+    var startX = 421;
+    var startY = 92;
+    var size = 56;
+    var gap = 5;
+    var perRow = 7;
 
     for (var j = 0; j < skins.length; j++) {
       var key = prefix + j;
       if (!this.textures.exists(key)) continue;
-
       var col = j % perRow;
       var row = Math.floor(j / perRow);
       var x = startX + col * (size + gap) + size / 2;
       var y = startY + row * (size + gap) + size / 2;
 
-      var spr = this.add.sprite(x, y, key, 0)
-        .setDisplaySize(size, size)
+      var spr = this.add.sprite(x, y, key, 0).setDisplaySize(size, size)
         .setInteractive({ useHandCursor: true });
 
       (function(skinIndex, sx, sy) {
@@ -265,14 +294,14 @@ class LobbyScene extends Phaser.Scene {
           window.network.emit('skin:select', { skin: skinIndex });
           self.highlightSkin(sx, sy, size);
         });
-        spr.on('pointerover', function() { spr.setAlpha(0.8); });
+        spr.on('pointerover', function() { spr.setAlpha(0.75); });
         spr.on('pointerout', function() { spr.setAlpha(1); });
       })(j, x, y);
 
       this.skinSprites.push(spr);
     }
 
-    // Restore highlight if skin already selected
+    // Restore highlight
     if (this.mySkin >= 0 && this.mySkin < this.skinSprites.length) {
       var sel = this.skinSprites[this.mySkin];
       this.highlightSkin(sel.x, sel.y, size);
@@ -282,6 +311,8 @@ class LobbyScene extends Phaser.Scene {
   highlightSkin(x, y, size) {
     this.skinSelectionGraphics.clear();
     this.skinSelectionGraphics.lineStyle(3, 0xf0c020, 1);
-    this.skinSelectionGraphics.strokeRect(x - size / 2 - 2, y - size / 2 - 2, size + 4, size + 4);
+    this.skinSelectionGraphics.strokeRect(x - size / 2 - 3, y - size / 2 - 3, size + 6, size + 6);
+    this.skinSelectionGraphics.lineStyle(1, 0xffffff, 0.4);
+    this.skinSelectionGraphics.strokeRect(x - size / 2 - 5, y - size / 2 - 5, size + 10, size + 10);
   }
 }
