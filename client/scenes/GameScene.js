@@ -238,16 +238,15 @@ class GameScene extends Phaser.Scene {
         }
       }
 
-      // Red blink when carried
+      // Red blink when carried — capture spriteRef to avoid closure over loop var
       if (p.state === 'carried' && !spr.blinkTween) {
+        var spriteRef = spr.sprite;
         spr.blinkTween = this.tweens.addCounter({
           from: 0, to: 1, duration: 400, yoyo: true, repeat: -1,
           onUpdate: function(tween) {
             var v = tween.getValue();
-            var r = Math.floor(255);
-            var g = Math.floor(255 * (1 - v * 0.85));
-            var b = Math.floor(255 * (1 - v * 0.85));
-            spr.sprite.setTint(Phaser.Display.Color.GetColor(r, g, b));
+            var gb = Math.floor(255 * (1 - v * 0.85));
+            spriteRef.setTint(Phaser.Display.Color.GetColor(255, gb, gb));
           },
         });
       } else if (p.state !== 'carried' && spr.blinkTween) {
