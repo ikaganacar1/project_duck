@@ -16,52 +16,52 @@ class LobbyScene extends Phaser.Scene {
 
     // ── BACKGROUND ──────────────────────────────────────
     var bg = this.add.graphics();
-    bg.fillGradientStyle(0x0d1f05, 0x0d1f05, 0x1a0a00, 0x1a0a00, 1);
+    bg.fillGradientStyle(0xFFAA00, 0xFFAA00, 0xFFD786, 0xFFD786, 1);
     bg.fillRect(0, 0, w, h);
 
     // Divider line
     var div = this.add.graphics();
-    div.lineStyle(1, 0x334422, 0.6);
+    div.lineStyle(2, 0xcc7700, 0.5);
     div.lineBetween(400, 0, 400, h);
 
     // ── LEFT PANEL ──────────────────────────────────────
     this.add.text(14, 10, 'DUCK HUNT', {
-      fontFamily: font, fontSize: '30px', color: '#f0c020',
-      fontStyle: 'bold', stroke: '#000000', strokeThickness: 4,
+      fontFamily: font, fontSize: '30px', color: '#7a2200',
+      fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
     });
     this.add.text(14, 42, 'Yakalanmadan hayatta kal!', {
-      fontFamily: font, fontSize: '11px', color: '#77aa44',
+      fontFamily: font, fontSize: '11px', color: '#7a3300',
     });
 
     // Team count header
     this.teamHeader = this.add.text(200, 62, '', {
-      fontFamily: font, fontSize: '13px', color: '#cccccc', align: 'center',
+      fontFamily: font, fontSize: '13px', color: '#3a1500', align: 'center',
     }).setOrigin(0.5, 0);
 
     // Player list background
     var listBg = this.add.graphics();
-    listBg.fillStyle(0x000000, 0.35);
+    listBg.fillStyle(0x000000, 0.22);
     listBg.fillRoundedRect(8, 82, 385, 200, 8);
 
     this.playerListTitle = this.add.text(200, 90, 'Oyuncular', {
-      fontFamily: font, fontSize: '12px', color: '#aaaaaa', fontStyle: 'bold',
+      fontFamily: font, fontSize: '12px', color: '#ffddaa', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
     this.playerListText = this.add.text(200, 108, 'Bağlanılıyor...', {
-      fontFamily: font, fontSize: '13px', color: '#dddddd',
+      fontFamily: font, fontSize: '13px', color: '#fff0cc',
       align: 'center', lineSpacing: 6,
     }).setOrigin(0.5, 0);
 
     // ── TEAM JOIN BUTTONS (below player list) ──────────
     this.hunterBtn = this.add.text(103, 298, 'AVCI TAKIM', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
-      color: '#ffaaaa', backgroundColor: '#5a1a1a',
+      color: '#ffffff', backgroundColor: '#aa2200',
       padding: { x: 18, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.runnerBtn = this.add.text(297, 298, 'KAÇAK TAKIM', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
-      color: '#ffffaa', backgroundColor: '#4a3a00',
+      color: '#ffffff', backgroundColor: '#1a5500',
       padding: { x: 18, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -75,7 +75,7 @@ class LobbyScene extends Phaser.Scene {
 
     // Countdown
     this.countdownText = this.add.text(200, 340, '', {
-      fontFamily: font, fontSize: '15px', color: '#ff9944', fontStyle: 'bold',
+      fontFamily: font, fontSize: '15px', color: '#660000', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
     // ── RIGHT PANEL ──────────────────────────────────────
@@ -83,19 +83,19 @@ class LobbyScene extends Phaser.Scene {
 
     // Name
     this.add.text(rx, 10, 'İSMİN', {
-      fontFamily: font, fontSize: '10px', color: '#888888', fontStyle: 'bold',
+      fontFamily: font, fontSize: '10px', color: '#7a3300', fontStyle: 'bold',
     });
 
     var names = CONSTANTS.PLAYER_NAMES;
     this.playerName = names[Math.floor(Math.random() * names.length)];
 
     this.nameTag = this.add.text(rx, 24, this.playerName, {
-      fontFamily: font, fontSize: '20px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#ffffff18', padding: { x: 14, y: 6 },
+      fontFamily: font, fontSize: '20px', color: '#3a1500', fontStyle: 'bold',
+      backgroundColor: '#00000018', padding: { x: 14, y: 6 },
     }).setInteractive({ useHandCursor: true });
 
     this.add.text(rx, 55, 'değiştirmek için tıkla', {
-      fontFamily: font, fontSize: '9px', color: '#444444',
+      fontFamily: font, fontSize: '9px', color: '#aa6600',
     });
 
     this.nameTag.on('pointerdown', function() {
@@ -106,17 +106,18 @@ class LobbyScene extends Phaser.Scene {
 
     // Skin section
     this.skinLabel = this.add.text(rx, 74, 'SKİN SEÇ', {
-      fontFamily: font, fontSize: '10px', color: '#888888', fontStyle: 'bold',
+      fontFamily: font, fontSize: '10px', color: '#7a3300', fontStyle: 'bold',
     }).setAlpha(0);
 
+    this.skinPanelGraphics = this.add.graphics();
     this.skinSprites = [];
     this.skinSelectionGraphics = this.add.graphics();
 
     // Ready button
     this.isReady = false;
     this.readyBtn = this.add.text(606, h - 38, 'HAZIR DEĞİL', {
-      fontFamily: font, fontSize: '17px', color: '#666666', fontStyle: 'bold',
-      backgroundColor: '#222222', padding: { x: 28, y: 10 },
+      fontFamily: font, fontSize: '17px', color: '#ffddaa', fontStyle: 'bold',
+      backgroundColor: '#7a2200', padding: { x: 28, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.readyBtn.on('pointerdown', function() {
@@ -243,17 +244,15 @@ class LobbyScene extends Phaser.Scene {
   }
 
   updateTeamButtons() {
-    // Highlight the selected team button
     if (this.myTeam === 'hunter') {
-      this.hunterBtn.setStyle({ color: '#ff6666', backgroundColor: '#881111' });
-      this.runnerBtn.setStyle({ color: '#ffffaa', backgroundColor: '#4a3a00' });
+      this.hunterBtn.setStyle({ color: '#ffffff', backgroundColor: '#dd2200' });
+      this.runnerBtn.setStyle({ color: '#ffffff', backgroundColor: '#1a5500' });
     } else if (this.myTeam === 'runner') {
-      this.runnerBtn.setStyle({ color: '#ffee44', backgroundColor: '#886600' });
-      this.hunterBtn.setStyle({ color: '#ffaaaa', backgroundColor: '#5a1a1a' });
+      this.runnerBtn.setStyle({ color: '#ffffff', backgroundColor: '#228800' });
+      this.hunterBtn.setStyle({ color: '#ffffff', backgroundColor: '#aa2200' });
     }
-    // Unlock ready button
     if (this.myTeam && !this.isReady) {
-      this.readyBtn.setStyle({ color: '#aaaaaa', backgroundColor: '#333333' });
+      this.readyBtn.setStyle({ color: '#ffddaa', backgroundColor: '#7a2200' });
       this.readyBtn.setText('HAZIR DEĞİL');
     }
   }
@@ -264,6 +263,7 @@ class LobbyScene extends Phaser.Scene {
     }
     this.skinSprites = [];
     this.skinSelectionGraphics.clear();
+    this.skinPanelGraphics.clear();
 
     if (!this.myTeam) { this.skinLabel.setAlpha(0); return; }
 
@@ -271,14 +271,20 @@ class LobbyScene extends Phaser.Scene {
     var skins = this.myTeam === 'hunter' ? window.hunterSkins : window.runnerSkins;
     var prefix = this.myTeam === 'hunter' ? 'hunter-skin-' : 'runner-skin-';
     var self = this;
-    var size = 75;
+    var size = 78;
     var gap = 6;
-    // runners: 9 skins → 3 per row (3x3). hunters: 8 skins → 4 per row (4x2)
-    var perRow = this.myTeam === 'runner' ? 3 : 4;
-    // Center the grid horizontally in right panel (421-812 = 391px wide)
+    var perRow = 4; // both teams: 4x2 grid
     var gridW = perRow * size + (perRow - 1) * gap;
     var startX = 421 + (391 - gridW) / 2;
     var startY = 94;
+    var rows = Math.ceil(skins.length / perRow);
+    var gridH = rows * size + (rows - 1) * gap;
+
+    // Panel behind skins: light for hunters, dark for runners
+    var panelColor = this.myTeam === 'hunter' ? 0xffe0cc : 0x1a3300;
+    var panelAlpha = this.myTeam === 'hunter' ? 0.6 : 0.55;
+    this.skinPanelGraphics.fillStyle(panelColor, panelAlpha);
+    this.skinPanelGraphics.fillRoundedRect(startX - 8, startY - 8, gridW + 16, gridH + 16, 8);
 
     for (var j = 0; j < skins.length; j++) {
       var key = prefix + j;
