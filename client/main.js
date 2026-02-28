@@ -13,7 +13,7 @@ var config = {
     height: 375,
   },
   backgroundColor: '#1a3a0a',
-  scene: [BootScene, LobbyScene, GameScene, ResultScene],
+  scene: [BootScene, LobbyScene, CountdownScene, GameScene, ResultScene],
 };
 
 var game = new Phaser.Game(config);

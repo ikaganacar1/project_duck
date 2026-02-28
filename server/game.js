@@ -97,14 +97,17 @@ class Game {
       obstacles: this.obstacles,
     });
 
-    this.tickTimer = setInterval(() => this.tick(), C.TICK_INTERVAL);
+    // Delay game ticks to match client countdown screen
+    setTimeout(() => {
+      this.tickTimer = setInterval(() => this.tick(), C.TICK_INTERVAL);
 
-    this.timerInterval = setInterval(() => {
-      this.timeRemaining--;
-      if (this.timeRemaining <= 0) {
-        this.endGame();
-      }
-    }, 1000);
+      this.timerInterval = setInterval(() => {
+        this.timeRemaining--;
+        if (this.timeRemaining <= 0) {
+          this.endGame();
+        }
+      }, 1000);
+    }, 4000);
   }
 
   tick() {

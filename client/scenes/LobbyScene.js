@@ -110,7 +110,7 @@ class LobbyScene extends Phaser.Scene {
     }.bind(this));
 
     window.network.on('game:start', function(data) {
-      this.scene.start('Game', data);
+      this.scene.start('Countdown', data);
     }.bind(this));
 
     window.network.on('lobby:full', function() {
