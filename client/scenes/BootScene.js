@@ -23,6 +23,10 @@ class BootScene extends Phaser.Scene {
       { key: 'cage-active', svgW: 160, svgH: 160 },
     ];
 
+    // Spritesheets — 2x2 grid, 1024x1024 per frame
+    this.load.spritesheet('hunter-sheet', 'assets/hunter-animation.png', { frameWidth: 1024, frameHeight: 1024 });
+    this.load.spritesheet('runner-sheet', 'assets/runner-animation.png', { frameWidth: 1024, frameHeight: 1024 });
+
     // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
     for (var i = 0; i < this.assetDefs.length; i++) {
@@ -72,8 +76,8 @@ class BootScene extends Phaser.Scene {
       'tree-trunk': function(scene) { scene.generateCircleTexture('tree-trunk', 0x6b4226, 15); },
       'tree-canopy': function(scene) { scene.generateCircleTexture('tree-canopy', 0x2d7a2d, 35); },
       'bush': function(scene) { scene.generateCircleTexture('bush', 0x3a8a3a, 45); },
-      'cage': function(scene) { scene.generateCircleTexture('cage', 0xaaaaaa, 80); },
-      'cage-active': function(scene) { scene.generateCircleTexture('cage-active', 0xff6666, 80); },
+      'cage': function(scene) { scene.generateCircleTexture('cage', 0xaaaa, 80); },
+      'cage-active': function(scene) { scene.generateCircleTexture('cage-active', 0xff66, 80); },
     };
 
     for (var key in fallbacks) {
@@ -85,6 +89,16 @@ class BootScene extends Phaser.Scene {
 
   startGame() {
     this.generateCircleTexture('ground', 0x4a8a2a, 16);
+
+    // Create walk animations from spritesheets if loaded
+    if (this.textures.exists('hunter-sheet')) {
+      this.anims.create({ key: 'hunter-walk', frames: this.anims.generateFrameNumbers('hunter-sheet', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'hunter-idle', frames: [{ key: 'hunter-sheet', frame: 0 }], frameRate: 1 });
+    }
+    if (this.textures.exists('runner-sheet')) {
+      this.anims.create({ key: 'runner-walk', frames: this.anims.generateFrameNumbers('runner-sheet', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+      this.anims.create({ key: 'runner-idle', frames: [{ key: 'runner-sheet', frame: 0 }], frameRate: 1 });
+    }
 
     window.network.connect().then(function() {
       this.scene.start('Lobby');

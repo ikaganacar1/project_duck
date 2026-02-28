@@ -25,7 +25,7 @@ class GameScene extends Phaser.Scene {
         sprite = this.add.image(obs.x, obs.y, 'rock')
           .setDisplaySize(obs.radius * 2, obs.radius * 2);
       } else if (obs.type === 'tree') {
-        this.add.image(obs.x, obs.y, 'tree-trunk');
+        this.add.image(obs.x, obs.y, 'tree-trunk').setDisplaySize(30, 30);
         sprite = this.add.image(obs.x, obs.y - 10, 'tree-canopy')
           .setDisplaySize(70, 70);
       } else if (obs.type === 'bush') {
@@ -41,7 +41,7 @@ class GameScene extends Phaser.Scene {
     this.cageSprites = [];
     for (var i = 0; i < this.gameData.cages.length; i++) {
       var cage = this.gameData.cages[i];
-      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setAlpha(0.5);
+      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160);
       var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
         fontSize: '14px', color: '#ffffff',
       }).setOrigin(0.5);
@@ -186,8 +186,19 @@ class GameScene extends Phaser.Scene {
         spr.container.y += (p.y - spr.container.y) * 0.2;
       }
 
-      if (p.moving) {
+      if (p.moving && p.state === 'free') {
         spr.sprite.setFlipX(Math.cos(p.angle) < 0);
+        if (spr.hasSheet) {
+          var walkKey = spr.team === 'hunter' ? 'hunter-walk' : 'runner-walk';
+          if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== walkKey) {
+            spr.sprite.play(walkKey);
+          }
+        }
+      } else if (spr.hasSheet) {
+        var idleKey = spr.team === 'hunter' ? 'hunter-idle' : 'runner-idle';
+        if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== idleKey) {
+          spr.sprite.play(idleKey);
+        }
       }
 
       spr.nameLabel.setText(p.name);
@@ -226,10 +237,10 @@ class GameScene extends Phaser.Scene {
     for (var cageSpr of this.cageSprites) {
       var cageData = state.cages[cageSpr.index];
       if (cageData.prisoners.length > 0) {
-        cageSpr.sprite.setTexture('cage-active');
+        cageSpr.sprite.setTexture('cage-active').setDisplaySize(160, 160);
         cageSpr.text.setText('Kafes (' + cageData.prisoners.length + ')');
       } else {
-        cageSpr.sprite.setTexture('cage');
+        cageSpr.sprite.setTexture('cage').setDisplaySize(160, 160);
         cageSpr.text.setText('Kafes');
       }
       if (cageData.rescueProgress > 0) {
@@ -288,9 +299,17 @@ class GameScene extends Phaser.Scene {
   }
 
   createPlayerSprite(id, data) {
-    var textureKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
+    var sheetKey = data.team === 'hunter' ? 'hunter-sheet' : 'runner-sheet';
+    var fallbackKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
+    var hasSheet = this.textures.exists(sheetKey);
+
     var container = this.add.container(data.x, data.y);
-    var sprite = this.add.image(0, 0, textureKey).setDisplaySize(48, 38);
+    var sprite;
+    if (hasSheet) {
+      sprite = this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48);
+    } else {
+      sprite = this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38);
+    }
     var nameLabel = this.add.text(0, -28, data.name || '', {
       fontSize: '11px', color: '#ffffff',
       backgroundColor: '#00000088', padding: { x: 3, y: 1 },
@@ -298,7 +317,7 @@ class GameScene extends Phaser.Scene {
     container.add([sprite, nameLabel]);
     container.setDepth(100);
 
-    this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel };
+    this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel, hasSheet: hasSheet, team: data.team };
     return this.playerSprites[id];
   }
 
