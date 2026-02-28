@@ -24,8 +24,9 @@ class SpectatorScene extends Phaser.Scene {
     var w = this.cameras.main.width;
     var h = this.cameras.main.height;
     var font = 'Fredoka, sans-serif';
+    var self = this;
 
-    // Create any missing skin animations
+    // Skin animations
     var rSkins = window.runnerSkins || [];
     var hSkins = window.hunterSkins || [];
     for (var ri = 0; ri < rSkins.length; ri++) {
@@ -41,97 +42,106 @@ class SpectatorScene extends Phaser.Scene {
       }
     }
 
-    // Zoomed out camera to show the whole map
-    // Add padding so map doesn't touch screen edges
+    // Zoomed out main camera
     var zoom = Math.min(w, h) / (CONSTANTS.MAP_RADIUS * 2 + 160);
-    this.zoom = zoom;
     this.cameras.main.setZoom(zoom);
     this.cameras.main.centerOn(0, 0);
 
-    // Map
-    this.drawMap();
+    // Collect all world objects so uiCam can ignore them
+    var worldObjs = [];
+    function addW(obj) { worldObjs.push(obj); return obj; }
 
-    // Static shadows
-    var shadowG = this.add.graphics().setDepth(0);
-    shadowG.fillStyle(0x000000, 0.38);
+    // ── WORLD: Map ─────────────────────────────────────────────
+    var outer = addW(this.add.graphics().setDepth(-3));
+    outer.fillStyle(0x111111, 1);
+    outer.fillRect(-CONSTANTS.MAP_RADIUS - 200, -CONSTANTS.MAP_RADIUS - 200, CONSTANTS.WORLD_SIZE + 400, CONSTANTS.WORLD_SIZE + 400);
 
-    // Obstacles
-    this.obstacleSprites = [];
-    for (var obs of this.gameData.obstacles) {
-      var sprite;
-      if (obs.type === 'rock') {
-        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.85, obs.radius * 2, obs.radius * 0.65);
-        sprite = this.add.image(obs.x, obs.y, 'rock').setDisplaySize(obs.radius * 2, obs.radius * 2);
-      } else if (obs.type === 'tree') {
-        shadowG.fillEllipse(obs.x, obs.y + 18, 50, 16);
-        this.add.image(obs.x, obs.y, 'tree-trunk').setDisplaySize(30, 30);
-        sprite = this.add.image(obs.x, obs.y - 10, 'tree-canopy').setDisplaySize(70, 70);
-      } else if (obs.type === 'bush') {
-        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.5, obs.radius * 1.6, obs.radius * 0.6);
-        sprite = this.add.image(obs.x, obs.y, 'bush').setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7);
-      }
-      if (sprite) this.obstacleSprites.push(sprite);
+    if (this.textures.exists('map-bg')) {
+      addW(this.add.image(0, 0, 'map-bg').setDisplaySize(CONSTANTS.MAP_RADIUS * 2, CONSTANTS.MAP_RADIUS * 2).setDepth(-2));
+    } else {
+      var gfill = addW(this.add.graphics().setDepth(-2));
+      gfill.fillStyle(0x4a8a2a, 1);
+      gfill.fillCircle(0, 0, CONSTANTS.MAP_RADIUS);
     }
 
-    // Cages
+    var border = addW(this.add.graphics().setDepth(50));
+    border.lineStyle(6, 0xff4444, 0.8);
+    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS);
+    border.lineStyle(2, 0xffffff, 0.3);
+    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS + 4);
+
+    // ── WORLD: Shadows + Obstacles ─────────────────────────────
+    var shadowG = addW(this.add.graphics().setDepth(0));
+    shadowG.fillStyle(0x000000, 0.38);
+
+    for (var obs of this.gameData.obstacles) {
+      if (obs.type === 'rock') {
+        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.85, obs.radius * 2, obs.radius * 0.65);
+        addW(this.add.image(obs.x, obs.y, 'rock').setDisplaySize(obs.radius * 2, obs.radius * 2));
+      } else if (obs.type === 'tree') {
+        shadowG.fillEllipse(obs.x, obs.y + 18, 50, 16);
+        addW(this.add.image(obs.x, obs.y, 'tree-trunk').setDisplaySize(30, 30));
+        addW(this.add.image(obs.x, obs.y - 10, 'tree-canopy').setDisplaySize(70, 70));
+      } else if (obs.type === 'bush') {
+        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.5, obs.radius * 1.6, obs.radius * 0.6);
+        addW(this.add.image(obs.x, obs.y, 'bush').setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7));
+      }
+    }
+
+    // ── WORLD: Cages ───────────────────────────────────────────
     this.cageSprites = [];
     for (var ci = 0; ci < this.gameData.cages.length; ci++) {
       var cage = this.gameData.cages[ci];
       shadowG.fillEllipse(cage.x, cage.y + 75, 140, 35);
-      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160);
-      this.cageSprites.push({ sprite: cageSprite, index: ci });
+      var cageImg = addW(this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160));
+      this.cageSprites.push({ sprite: cageImg, index: ci });
     }
 
-    // Player sprites
+    // ── WORLD: Players ─────────────────────────────────────────
     this.playerSprites = {};
+    this.worldObjs = worldObjs; // store for dynamic player sprites
     for (var id in this.gameData.players) {
       this.createPlayerSprite(id, this.gameData.players[id]);
     }
 
-    // ── HUD ─────────────────────────────────────────────────────
-    // With a zoomed camera, setScrollFactor(0) positions are in screen space
-    // but get scaled by zoom. Compensate: world_pos = screen_pos / zoom,
-    // then setScale(1/zoom) so text appears at normal readable size.
-    var invZ = 1 / zoom;
+    // ── UI CAMERA (created after all world objects) ────────────
+    // uiCam renders at zoom=1, only sees HUD. Main cam sees only world.
+    this.uiCam = this.cameras.add(0, 0, w, h).setName('ui');
+    this.uiCam.ignore(this.worldObjs);
 
-    this.timerText = this.add.text(10 * invZ, 10 * invZ, '', {
+    // ── HUD (screen-space positions work correctly in uiCam) ───
+    this.timerText = this.add.text(10, 10, '', {
       fontFamily: font, fontSize: '20px', color: '#ffffff',
-      backgroundColor: '#00000088', padding: { x: 8, y: 4 },
-    }).setScrollFactor(0).setScale(invZ).setDepth(1000);
+      backgroundColor: '#00000099', padding: { x: 10, y: 5 }, fontStyle: 'bold',
+    }).setScrollFactor(0).setDepth(1000);
 
-    this.spectatorBadge = this.add.text((w / 2) * invZ, 10 * invZ, '👁  SEYİRCİ', {
+    this.spectatorBadge = this.add.text(w / 2, 10, '👁  SEYİRCİ', {
       fontFamily: font, fontSize: '16px', color: '#ffdd88', fontStyle: 'bold',
-      backgroundColor: '#00000088', padding: { x: 10, y: 4 },
-    }).setOrigin(0.5, 0).setScrollFactor(0).setScale(invZ).setDepth(1000);
+      backgroundColor: '#00000099', padding: { x: 10, y: 5 },
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1000);
 
-    this.playerCountText = this.add.text((w - 10) * invZ, 10 * invZ, '', {
-      fontFamily: font, fontSize: '13px', color: '#ffffff',
-      backgroundColor: '#00000088', padding: { x: 8, y: 4 },
-      align: 'right',
-    }).setOrigin(1, 0).setScrollFactor(0).setScale(invZ).setDepth(1000);
+    this.playerCountText = this.add.text(w - 10, 10, '', {
+      fontFamily: font, fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+      backgroundColor: '#00000099', padding: { x: 10, y: 5 },
+    }).setOrigin(1, 0).setScrollFactor(0).setDepth(1000);
 
-    // ── Events ──────────────────────────────────────────────────
+    // Main camera ignores all HUD objects
+    this.cameras.main.ignore([this.timerText, this.spectatorBadge, this.playerCountText]);
+
+    // ── Events ────────────────────────────────────────────────
     this.latestState = null;
-
-    window.network.on('game:state', function(state) {
-      this.latestState = state;
-    }.bind(this));
-
-    window.network.on('game:end', function() {
-      this.scene.start('Lobby');
-    }.bind(this));
+    window.network.on('game:state', function(state) { this.latestState = state; }.bind(this));
+    window.network.on('game:end', function() { this.scene.start('Lobby'); }.bind(this));
   }
 
   update() {
     if (!this.latestState) return;
     var state = this.latestState;
 
-    // Timer
     var min = Math.floor(state.timer / 60);
     var sec = state.timer % 60;
     this.timerText.setText('T ' + min + ':' + (sec < 10 ? '0' : '') + sec);
 
-    // Player counts
     var players = state.players;
     var hunters = 0, runners = 0, caged = 0;
     for (var id in players) {
@@ -140,7 +150,6 @@ class SpectatorScene extends Phaser.Scene {
     }
     this.playerCountText.setText('🔴 ' + hunters + '  🟡 ' + (runners - caged) + '/' + runners);
 
-    // Update player sprites
     for (var pid in players) {
       var p = players[pid];
       var spr = this.playerSprites[pid];
@@ -160,12 +169,10 @@ class SpectatorScene extends Phaser.Scene {
         if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim?.key !== idleKey) spr.sprite.play(idleKey);
       }
 
-      // Spectators see everyone — only dim caged players
       spr.container.setAlpha(p.state === 'caged' ? 0.5 : 1);
       spr.nameLabel.setText(p.name);
     }
 
-    // Remove disconnected
     for (var dpid in this.playerSprites) {
       if (!players[dpid]) {
         this.playerSprites[dpid].container.destroy();
@@ -173,58 +180,36 @@ class SpectatorScene extends Phaser.Scene {
       }
     }
 
-    // Cages
     for (var cs of this.cageSprites) {
-      var cageData = state.cages[cs.index];
-      cs.sprite.setTexture(cageData.prisoners.length > 0 ? 'cage-active' : 'cage').setDisplaySize(160, 160);
+      cs.sprite.setTexture(state.cages[cs.index].prisoners.length > 0 ? 'cage-active' : 'cage').setDisplaySize(160, 160);
     }
   }
 
   createPlayerSprite(id, data) {
-    var sheetKey = null;
     var skin = data.skin !== undefined ? data.skin : -1;
-    if (data.team === 'hunter' && skin >= 0 && this.textures.exists('hunter-skin-' + skin)) {
-      sheetKey = 'hunter-skin-' + skin;
-    } else if (data.team === 'runner' && skin >= 0 && this.textures.exists('runner-skin-' + skin)) {
-      sheetKey = 'runner-skin-' + skin;
-    }
-    var hasSheet = !!sheetKey;
-    var fallbackKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
+    var sheetKey = null;
+    if (data.team === 'hunter' && skin >= 0 && this.textures.exists('hunter-skin-' + skin)) sheetKey = 'hunter-skin-' + skin;
+    else if (data.team === 'runner' && skin >= 0 && this.textures.exists('runner-skin-' + skin)) sheetKey = 'runner-skin-' + skin;
 
+    var hasSheet = !!sheetKey;
     var container = this.add.container(data.x, data.y).setDepth(100);
-    var playerShadow = this.add.graphics();
-    playerShadow.fillStyle(0x000000, 0.25);
-    playerShadow.fillEllipse(0, 20, 36, 12);
+
+    // World object — tell uiCam to ignore it
+    if (this.uiCam) this.uiCam.ignore(container);
+    if (this.worldObjs) this.worldObjs.push(container);
+
+    var shadow = this.add.graphics();
+    shadow.fillStyle(0x000000, 0.25);
+    shadow.fillEllipse(0, 20, 36, 12);
     var sprite = hasSheet
       ? this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48)
-      : this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38);
+      : this.add.image(0, 0, data.team === 'hunter' ? 'duck-hunter' : 'duck-runner').setDisplaySize(48, 38);
     var nameLabel = this.add.text(0, -28, data.name || '', {
       fontSize: '11px', color: '#ffffff', backgroundColor: '#00000088', padding: { x: 3, y: 1 },
     }).setOrigin(0.5);
-    container.add([playerShadow, sprite, nameLabel]);
+    container.add([shadow, sprite, nameLabel]);
 
     this.playerSprites[id] = { container, sprite, nameLabel, hasSheet, team: data.team, skin };
     return this.playerSprites[id];
-  }
-
-  drawMap() {
-    var outer = this.add.graphics().setDepth(-3);
-    outer.fillStyle(0x111111, 1);
-    outer.fillRect(-CONSTANTS.MAP_RADIUS - 200, -CONSTANTS.MAP_RADIUS - 200, CONSTANTS.WORLD_SIZE + 400, CONSTANTS.WORLD_SIZE + 400);
-
-    var mapSize = CONSTANTS.MAP_RADIUS * 2;
-    if (this.textures.exists('map-bg')) {
-      this.add.image(0, 0, 'map-bg').setDisplaySize(mapSize, mapSize).setDepth(-2);
-    } else {
-      var g = this.add.graphics().setDepth(-2);
-      g.fillStyle(0x4a8a2a, 1);
-      g.fillCircle(0, 0, CONSTANTS.MAP_RADIUS);
-    }
-
-    var border = this.add.graphics().setDepth(50);
-    border.lineStyle(6, 0xff4444, 0.8);
-    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS);
-    border.lineStyle(2, 0xffffff, 0.3);
-    border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS + 4);
   }
 }
