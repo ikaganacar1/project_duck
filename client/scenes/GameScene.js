@@ -135,9 +135,17 @@ class GameScene extends Phaser.Scene {
 
     window.network.on('game:capture', function(data) {
       this.sound.play('sfx-capture', { volume: 0.5 });
-      // Big fight effect at runner's position
-      var runner = this.latestState && this.latestState.players[data.runnerId];
-      if (runner) this.spawnEffect(runner.x, runner.y, 120);
+      // Fight effect at midpoint between hunter and runner
+      var state = this.latestState;
+      if (state) {
+        var hunter = state.players[data.hunterId];
+        var runner = state.players[data.runnerId];
+        if (hunter && runner) {
+          this.spawnEffect((hunter.x + runner.x) / 2, (hunter.y + runner.y) / 2, 120);
+        } else if (runner) {
+          this.spawnEffect(runner.x, runner.y, 120);
+        }
+      }
     }.bind(this));
 
     window.network.on('game:rescued', function() {
@@ -228,6 +236,24 @@ class GameScene extends Phaser.Scene {
         if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== idleKey) {
           spr.sprite.play(idleKey);
         }
+      }
+
+      // Red blink when carried
+      if (p.state === 'carried' && !spr.blinkTween) {
+        spr.blinkTween = this.tweens.addCounter({
+          from: 0, to: 1, duration: 400, yoyo: true, repeat: -1,
+          onUpdate: function(tween) {
+            var v = tween.getValue();
+            var r = Math.floor(255);
+            var g = Math.floor(255 * (1 - v * 0.85));
+            var b = Math.floor(255 * (1 - v * 0.85));
+            spr.sprite.setTint(Phaser.Display.Color.GetColor(r, g, b));
+          },
+        });
+      } else if (p.state !== 'carried' && spr.blinkTween) {
+        spr.blinkTween.stop();
+        spr.blinkTween = null;
+        spr.sprite.clearTint();
       }
 
       spr.nameLabel.setText(p.name);
