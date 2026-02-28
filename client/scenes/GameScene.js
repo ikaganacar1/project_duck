@@ -23,14 +23,17 @@ class GameScene extends Phaser.Scene {
       var sprite;
       if (obs.type === 'rock') {
         sprite = this.add.image(obs.x, obs.y, 'rock')
-          .setDisplaySize(obs.radius * 2, obs.radius * 2);
+          .setDisplaySize(obs.radius * 2, obs.radius * 2)
+          .setDropShadow(4, 6, 0x000000, 0.4);
       } else if (obs.type === 'tree') {
         this.add.image(obs.x, obs.y, 'tree-trunk').setDisplaySize(30, 30);
         sprite = this.add.image(obs.x, obs.y - 10, 'tree-canopy')
-          .setDisplaySize(70, 70);
+          .setDisplaySize(70, 70)
+          .setDropShadow(4, 6, 0x000000, 0.35);
       } else if (obs.type === 'bush') {
         sprite = this.add.image(obs.x, obs.y, 'bush')
-          .setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7);
+          .setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7)
+          .setDropShadow(3, 5, 0x000000, 0.3);
       }
       if (sprite) {
         sprite._obsData = obs;
@@ -41,7 +44,7 @@ class GameScene extends Phaser.Scene {
     this.cageSprites = [];
     for (var i = 0; i < this.gameData.cages.length; i++) {
       var cage = this.gameData.cages[i];
-      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160);
+      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160).setDropShadow(5, 8, 0x000000, 0.4);
       var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
         fontSize: '14px', color: '#ffffff',
       }).setOrigin(0.5);
@@ -331,9 +334,9 @@ class GameScene extends Phaser.Scene {
     var container = this.add.container(data.x, data.y);
     var sprite;
     if (hasSheet) {
-      sprite = this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48);
+      sprite = this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48).setDropShadow(3, 4, 0x000000, 0.4);
     } else {
-      sprite = this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38);
+      sprite = this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38).setDropShadow(3, 4, 0x000000, 0.4);
     }
     var nameLabel = this.add.text(0, -28, data.name || '', {
       fontSize: '11px', color: '#ffffff',
