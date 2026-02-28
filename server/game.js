@@ -181,6 +181,8 @@ class Game {
     if (!player || player.state !== 'carried') return;
 
     player.struggleCount++;
+    // Notify all clients so hunters see the fight effect too
+    this.io.emit('game:struggle', { runnerId: socketId, hunterId: player.carriedBy });
     if (player.struggleCount >= C.STRUGGLE_THRESHOLD) {
       this.freePlayer(socketId, true);
       this.io.emit('game:freed', { playerId: socketId });

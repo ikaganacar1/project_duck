@@ -203,6 +203,22 @@ class GameScene extends Phaser.Scene {
       this.cameras.main.shake(200, 0.010);
     }.bind(this));
 
+    window.network.on('game:struggle', function(data) {
+      // Runner already sees effect from their own tap — only show for others
+      if (window.network.id !== data.runnerId) {
+        var state = this.latestState;
+        if (state) {
+          var runner = state.players[data.runnerId];
+          var hunter = state.players[data.hunterId];
+          if (runner && hunter) {
+            this.spawnEffect((runner.x + hunter.x) / 2, (runner.y + hunter.y) / 2, 48);
+          } else if (runner) {
+            this.spawnEffect(runner.x, runner.y, 48);
+          }
+        }
+      }
+    }.bind(this));
+
     window.network.on('game:freed', function() {
       this.sound.play('sfx-struggle-free', { volume: 0.5 });
       this.cameras.main.shake(180, 0.008);
