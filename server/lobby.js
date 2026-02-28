@@ -4,6 +4,7 @@ class Lobby {
   constructor(io) {
     this.io = io;
     this.players = new Map(); // socketId -> { name, ready, team, skin }
+    this.spectators = new Map(); // socketId -> { name }
     this.countdownTimer = null;
     this.countdownSeconds = 0;
     this.onGameStart = null; // callback set by index.js
@@ -22,6 +23,16 @@ class Lobby {
   removePlayer(socketId) {
     this.players.delete(socketId);
     this.cancelCountdown();
+    this.broadcast();
+  }
+
+  addSpectator(socket, name) {
+    this.spectators.set(socket.id, { name });
+    this.broadcast();
+  }
+
+  removeSpectator(socketId) {
+    this.spectators.delete(socketId);
     this.broadcast();
   }
 
@@ -119,7 +130,11 @@ class Lobby {
     for (const [id, p] of this.players) {
       players.push({ id, name: p.name, ready: p.ready, team: p.team, skin: p.skin });
     }
-    this.io.emit('lobby:update', { players });
+    const spectators = [];
+    for (const [id, s] of this.spectators) {
+      spectators.push({ id, name: s.name });
+    }
+    this.io.emit('lobby:update', { players, spectators });
   }
 
   getPlayerIds() {
@@ -132,6 +147,7 @@ class Lobby {
 
   clear() {
     this.players.clear();
+    this.spectators.clear();
     this.cancelCountdown();
   }
 }

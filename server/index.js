@@ -106,6 +106,15 @@ io.on('connection', (socket) => {
     lobby.setName(socket.id, name);
   });
 
+  socket.on('spectate', ({ name }) => {
+    if (game) {
+      game.addSpectator(socket.id);
+      socket.emit('game:spectate', game.getFullState());
+    } else {
+      lobby.addSpectator(socket, name);
+    }
+  });
+
   socket.on('input', (data) => {
     if (game) game.handleInput(socket.id, data);
   });
@@ -122,8 +131,11 @@ io.on('connection', (socket) => {
     console.log('Player disconnected:', socket.id);
     if (game && game.hasPlayer(socket.id)) {
       game.handleDisconnect(socket.id);
+    } else if (game && game.hasSpectator(socket.id)) {
+      game.removeSpectator(socket.id);
     } else {
       lobby.removePlayer(socket.id);
+      lobby.removeSpectator(socket.id);
     }
   });
 });

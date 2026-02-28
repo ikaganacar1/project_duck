@@ -13,6 +13,7 @@ class LobbyScene extends Phaser.Scene {
     this.mySkin = -1;
     this.hunterCount = 0;
     this.runnerCount = 0;
+    this.isSpectator = false;
 
     // ── BACKGROUND ──────────────────────────────────────
     var bg = this.add.graphics();
@@ -131,6 +132,33 @@ class LobbyScene extends Phaser.Scene {
       window.network.emit('ready', { ready: self.isReady });
     });
 
+    // Seyirci button
+    this.spectatorBtn = this.add.text(606, h - 78, '👁  SEYİRCİ OL', {
+      fontFamily: font, fontSize: '14px', color: '#aaddff', fontStyle: 'bold',
+      backgroundColor: '#003355', padding: { x: 20, y: 8 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.spectatorBtn.on('pointerdown', function() {
+      if (self.isSpectator) return;
+      self.isSpectator = true;
+      self.myTeam = null;
+      // Hide team/skin/ready UI
+      self.hunterBtn.setVisible(false);
+      self.runnerBtn.setVisible(false);
+      self.readyBtn.setVisible(false);
+      self.spectatorBtn.setStyle({ color: '#ffffff', backgroundColor: '#004488' }).setText('👁  SEYİRCİ');
+      self.buildSkinGrid(); // clears skin grid
+      self.skinLabel.setAlpha(0);
+      // Show spectator status label
+      self.spectatorStatusText.setAlpha(1);
+      window.network.emit('spectate', { name: self.playerName });
+    });
+
+    this.spectatorStatusText = this.add.text(606, h - 148, '👁 SEYİRCİ OLARAK\nBEKLİYORSUN', {
+      fontFamily: font, fontSize: '13px', color: '#aaddff', fontStyle: 'bold',
+      align: 'center', lineSpacing: 4,
+    }).setOrigin(0.5).setAlpha(0);
+
     // ── POPUP for team rejected ──────────────────────────
     this.popupBg = this.add.graphics().setDepth(500).setAlpha(0);
     this.popupText = this.add.text(w / 2, h / 2, '', {
@@ -196,6 +224,11 @@ class LobbyScene extends Phaser.Scene {
         var me = p.id === window.network.id ? ' ← sen' : '';
         lines.push(badge + ' ' + p.name + ready + me);
       }
+      var spectators = data.spectators || [];
+      for (var sp = 0; sp < spectators.length; sp++) {
+        var isMe = spectators[sp].id === window.network.id ? ' ← sen' : '';
+        lines.push('👁 ' + spectators[sp].name + isMe);
+      }
       if (players.length < CONSTANTS.MIN_PLAYERS) {
         lines.push('');
         lines.push('min ' + CONSTANTS.MIN_PLAYERS + ' oyuncu gerekli');
@@ -217,7 +250,17 @@ class LobbyScene extends Phaser.Scene {
 
     window.network.on('game:start', function(data) {
       if (self.menuMusic) self.menuMusic.stop();
-      self.scene.start('Countdown', data);
+      if (self.isSpectator) {
+        self.scene.start('Spectator', data);
+      } else {
+        self.scene.start('Countdown', data);
+      }
+    });
+
+    window.network.on('game:spectate', function(data) {
+      // Mid-game spectate: jump directly to SpectatorScene
+      if (self.menuMusic) self.menuMusic.stop();
+      self.scene.start('Spectator', data);
     });
 
     window.network.on('lobby:full', function() {

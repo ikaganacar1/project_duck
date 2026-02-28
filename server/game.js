@@ -55,6 +55,19 @@ class Game {
     }));
 
     this.disconnected = new Map();
+    this.spectators = new Set();
+  }
+
+  addSpectator(socketId) { this.spectators.add(socketId); }
+  removeSpectator(socketId) { this.spectators.delete(socketId); }
+  hasSpectator(socketId) { return this.spectators.has(socketId); }
+
+  getFullState() {
+    const playersData = {};
+    for (const [id, p] of this.players) {
+      playersData[id] = { name: p.name, x: p.x, y: p.y, team: p.team, state: p.state, skin: p.skin };
+    }
+    return { players: playersData, cages: this.cages, obstacles: this.obstacles };
   }
 
   start() {
