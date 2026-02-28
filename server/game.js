@@ -3,7 +3,7 @@ const { assignTeams } = require('./teams');
 const { generateObstacles, generateSpawnPoints } = require('./map');
 
 class Game {
-  constructor(io, playerEntries, onGameEnd) {
+  constructor(io, playerEntries, onGameEnd, runnerSkinCount) {
     this.io = io;
     this.onGameEnd = onGameEnd;
     this.tickTimer = null;
@@ -16,13 +16,32 @@ class Game {
     this.obstacles = generateObstacles();
     const spawns = generateSpawnPoints(hunters, runners);
 
+    // Shuffle skin indices for runners
+    var skinCount = runnerSkinCount || 0;
+    var skinPool = [];
+    if (skinCount > 0) {
+      for (var si = 0; si < skinCount; si++) skinPool.push(si);
+      // Fisher-Yates shuffle
+      for (var sj = skinPool.length - 1; sj > 0; sj--) {
+        var sk = Math.floor(Math.random() * (sj + 1));
+        var tmp = skinPool[sj]; skinPool[sj] = skinPool[sk]; skinPool[sk] = tmp;
+      }
+    }
+    var skinIdx = 0;
+
     this.players = new Map();
     for (const [id, { name }] of playerEntries) {
       const team = hunters.includes(id) ? 'hunter' : 'runner';
       const spawn = spawns[id];
+      var skin = -1;
+      if (team === 'runner' && skinCount > 0) {
+        skin = skinPool[skinIdx % skinPool.length];
+        skinIdx++;
+      }
       this.players.set(id, {
         name,
         team,
+        skin,
         x: spawn.x,
         y: spawn.y,
         angle: 0,
@@ -54,6 +73,7 @@ class Game {
         y: p.y,
         team: p.team,
         state: p.state,
+        skin: p.skin,
       };
     }
 
@@ -286,6 +306,7 @@ class Game {
         inBush: p.inBush,
         name: p.name,
         struggleCount: p.struggleCount,
+        skin: p.skin,
         immune: Date.now() < p.immuneUntil,
       };
     }

@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 const Lobby = require('./lobby');
 const Game = require('./game');
 
@@ -24,6 +25,20 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, '..', 'client')));
 app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
 
+// Scan runner skins at startup
+const runnersDir = path.join(__dirname, '..', 'client', 'assets', 'runners');
+let runnerSkins = [];
+try {
+  runnerSkins = fs.readdirSync(runnersDir).filter(f => f.endsWith('.png')).sort();
+  console.log('Runner skins found:', runnerSkins.length);
+} catch (e) {
+  console.log('No runner skins directory found');
+}
+
+app.get('/api/skins', (req, res) => {
+  res.json({ runners: runnerSkins });
+});
+
 const PORT = process.env.PORT || 3000;
 
 const lobby = new Lobby(io);
@@ -39,7 +54,7 @@ lobby.onGameStart = (playerEntries) => {
   console.log('Game starting with', playerEntries.length, 'players');
   game = new Game(io, playerEntries, () => {
     setTimeout(returnToLobby, 5000);
-  });
+  }, runnerSkins.length);
   game.start();
 };
 

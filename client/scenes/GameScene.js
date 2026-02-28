@@ -189,13 +189,13 @@ class GameScene extends Phaser.Scene {
       if (p.moving && p.state === 'free') {
         spr.sprite.setFlipX(Math.cos(p.angle) < 0);
         if (spr.hasSheet) {
-          var walkKey = spr.team === 'hunter' ? 'hunter-walk' : 'runner-walk';
+          var walkKey = spr.team === 'hunter' ? 'hunter-walk' : 'runner-walk-' + spr.skin;
           if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== walkKey) {
             spr.sprite.play(walkKey);
           }
         }
       } else if (spr.hasSheet) {
-        var idleKey = spr.team === 'hunter' ? 'hunter-idle' : 'runner-idle';
+        var idleKey = spr.team === 'hunter' ? 'hunter-idle' : 'runner-idle-' + spr.skin;
         if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== idleKey) {
           spr.sprite.play(idleKey);
         }
@@ -299,9 +299,17 @@ class GameScene extends Phaser.Scene {
   }
 
   createPlayerSprite(id, data) {
-    var sheetKey = data.team === 'hunter' ? 'hunter-sheet' : 'runner-sheet';
+    var sheetKey;
+    var skin = data.skin !== undefined ? data.skin : -1;
+    if (data.team === 'hunter') {
+      sheetKey = 'hunter-sheet';
+    } else if (skin >= 0 && this.textures.exists('runner-skin-' + skin)) {
+      sheetKey = 'runner-skin-' + skin;
+    } else {
+      sheetKey = null;
+    }
     var fallbackKey = data.team === 'hunter' ? 'duck-hunter' : 'duck-runner';
-    var hasSheet = this.textures.exists(sheetKey);
+    var hasSheet = sheetKey && this.textures.exists(sheetKey);
 
     var container = this.add.container(data.x, data.y);
     var sprite;
@@ -317,7 +325,7 @@ class GameScene extends Phaser.Scene {
     container.add([sprite, nameLabel]);
     container.setDepth(100);
 
-    this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel, hasSheet: hasSheet, team: data.team };
+    this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel, hasSheet: hasSheet, team: data.team, skin: skin };
     return this.playerSprites[id];
   }
 

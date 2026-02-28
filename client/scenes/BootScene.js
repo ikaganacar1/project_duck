@@ -23,9 +23,8 @@ class BootScene extends Phaser.Scene {
       { key: 'cage-active', svgW: 160, svgH: 160 },
     ];
 
-    // Spritesheets — 2x2 grid, 1024x1024 per frame
+    // Hunter spritesheet
     this.load.spritesheet('hunter-sheet', 'assets/hunter-animation.png', { frameWidth: 1024, frameHeight: 1024 });
-    this.load.spritesheet('runner-sheet', 'assets/runner-animation.png', { frameWidth: 1024, frameHeight: 1024 });
 
     // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
@@ -44,6 +43,33 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
+    // Fetch runner skin list from server, then continue loading
+    var self = this;
+    fetch('/api/skins').then(function(r) { return r.json(); }).then(function(data) {
+      window.runnerSkins = data.runners || [];
+      self.loadRunnerSkins();
+    }).catch(function() {
+      window.runnerSkins = [];
+      self.loadRunnerSkins();
+    });
+  }
+
+  loadRunnerSkins() {
+    var skins = window.runnerSkins;
+    if (skins.length > 0) {
+      for (var i = 0; i < skins.length; i++) {
+        this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + skins[i], { frameWidth: 1024, frameHeight: 1024 });
+      }
+      this.load.once('complete', function() {
+        this.afterSkinsLoaded();
+      }, this);
+      this.load.start();
+    } else {
+      this.afterSkinsLoaded();
+    }
+  }
+
+  afterSkinsLoaded() {
     // For assets that failed PNG load, try SVG before fallback
     var needsSvg = [];
     for (var i = 0; i < this.assetDefs.length; i++) {
@@ -64,6 +90,7 @@ class BootScene extends Phaser.Scene {
       }, this);
       this.load.start();
     } else {
+      this.applyFallbacks();
       this.startGame();
     }
   }
@@ -90,14 +117,20 @@ class BootScene extends Phaser.Scene {
   startGame() {
     this.generateCircleTexture('ground', 0x4a8a2a, 16);
 
-    // Create walk animations from spritesheets if loaded
+    // Hunter animations
     if (this.textures.exists('hunter-sheet')) {
       this.anims.create({ key: 'hunter-walk', frames: this.anims.generateFrameNumbers('hunter-sheet', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
       this.anims.create({ key: 'hunter-idle', frames: [{ key: 'hunter-sheet', frame: 0 }], frameRate: 1 });
     }
-    if (this.textures.exists('runner-sheet')) {
-      this.anims.create({ key: 'runner-walk', frames: this.anims.generateFrameNumbers('runner-sheet', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
-      this.anims.create({ key: 'runner-idle', frames: [{ key: 'runner-sheet', frame: 0 }], frameRate: 1 });
+
+    // Runner skin animations
+    var skins = window.runnerSkins;
+    for (var i = 0; i < skins.length; i++) {
+      var sheetKey = 'runner-skin-' + i;
+      if (this.textures.exists(sheetKey)) {
+        this.anims.create({ key: 'runner-walk-' + i, frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'runner-idle-' + i, frames: [{ key: sheetKey, frame: 0 }], frameRate: 1 });
+      }
     }
 
     window.network.connect().then(function() {
