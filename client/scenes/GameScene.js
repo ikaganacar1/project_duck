@@ -20,13 +20,13 @@ class GameScene extends Phaser.Scene {
 
     // Static shadows (one Graphics object for all obstacles and cages)
     var shadowG = this.add.graphics().setDepth(0);
-    shadowG.fillStyle(0x000000, 0.25);
+    shadowG.fillStyle(0x000000, 0.38);
 
     this.obstacleSprites = [];
     for (var obs of this.gameData.obstacles) {
       var sprite;
       if (obs.type === 'rock') {
-        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.4, obs.radius * 1.8, obs.radius * 0.7);
+        shadowG.fillEllipse(obs.x, obs.y + obs.radius * 0.85, obs.radius * 2, obs.radius * 0.65);
         sprite = this.add.image(obs.x, obs.y, 'rock')
           .setDisplaySize(obs.radius * 2, obs.radius * 2);
       } else if (obs.type === 'tree') {
@@ -48,7 +48,7 @@ class GameScene extends Phaser.Scene {
     this.cageSprites = [];
     for (var i = 0; i < this.gameData.cages.length; i++) {
       var cage = this.gameData.cages[i];
-      shadowG.fillEllipse(cage.x, cage.y + 55, 120, 30);
+      shadowG.fillEllipse(cage.x, cage.y + 75, 140, 35);
       var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160);
       var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
         fontSize: '14px', color: '#ffffff',
