@@ -38,28 +38,28 @@ class LobbyScene extends Phaser.Scene {
       fontFamily: font, fontSize: '13px', color: '#3a1500', align: 'center',
     }).setOrigin(0.5, 0);
 
-    // Player list background
+    // Player list background (sized for up to 15 players)
     var listBg = this.add.graphics();
     listBg.fillStyle(0x000000, 0.22);
-    listBg.fillRoundedRect(8, 82, 385, 200, 8);
+    listBg.fillRoundedRect(8, 76, 385, 248, 8);
 
-    this.playerListTitle = this.add.text(200, 90, 'Oyuncular', {
+    this.playerListTitle = this.add.text(200, 82, 'Oyuncular', {
       fontFamily: font, fontSize: '12px', color: '#ffddaa', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
 
-    this.playerListText = this.add.text(200, 108, 'Bağlanılıyor...', {
-      fontFamily: font, fontSize: '13px', color: '#fff0cc',
-      align: 'center', lineSpacing: 6,
+    this.playerListText = this.add.text(200, 98, 'Bağlanılıyor...', {
+      fontFamily: font, fontSize: '11px', color: '#fff0cc',
+      align: 'center', lineSpacing: 3,
     }).setOrigin(0.5, 0);
 
     // ── TEAM JOIN BUTTONS (below player list) ──────────
-    this.hunterBtn = this.add.text(103, h- 38, 'AVCI TAKIM', {
+    this.hunterBtn = this.add.text(103, h - 38, 'KOVALAYAN', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
       color: '#ffffff', backgroundColor: '#aa2200',
       padding: { x: 18, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    this.runnerBtn = this.add.text(297, h - 38, 'KAÇAK TAKIM', {
+    this.runnerBtn = this.add.text(297, h - 38, 'KAÇAN', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
       color: '#ffffff', backgroundColor: '#1a5500',
       padding: { x: 18, y: 10 },
@@ -164,7 +164,7 @@ class LobbyScene extends Phaser.Scene {
 
       // Header
       self.teamHeader.setText(
-        '🔴 AVCILAR: ' + hCount + '    🟡 KAÇAKLAR: ' + rCount
+        '🔴 KOVALAYANLAR: ' + hCount + '    🟡 KAÇANLAR: ' + rCount
       );
 
       // Hunter button dimmed if full
@@ -191,7 +191,7 @@ class LobbyScene extends Phaser.Scene {
       var lines = [];
       for (var k = 0; k < players.length; k++) {
         var p = players[k];
-        var badge = p.team === 'hunter' ? '🔴' : p.team === 'runner' ? '🟡' : '⚪';
+        var badge = p.team === 'hunter' ? '🔴 KOVALAYAN' : p.team === 'runner' ? '🟡 KAÇAN' : '⚪ ?';
         var ready = p.ready ? ' ✓' : '';
         var me = p.id === window.network.id ? ' ← sen' : '';
         lines.push(badge + ' ' + p.name + ready + me);
@@ -204,7 +204,7 @@ class LobbyScene extends Phaser.Scene {
     });
 
     window.network.on('lobby:team-rejected', function() {
-      self.showPopup('Avcı takımı dolu! Önce kaçak seç.');
+      self.showPopup('Kovalayan takımı dolu! Önce Kaçan seç.');
     });
 
     window.network.on('lobby:countdown', function(data) {

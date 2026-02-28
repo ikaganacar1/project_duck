@@ -32,7 +32,7 @@ class ResultScene extends Phaser.Scene {
 
     const isHunterWin = winner === 'hunter';
     const winColor = isHunterWin ? '#ff4444' : '#f0c020';
-    const winText = isHunterWin ? 'HUNTER KAZANDI!' : 'RUNNER KAZANDI!';
+    const winText = isHunterWin ? 'KOVALAYANLAR KAZANDI!' : 'KAÇANLAR KAZANDI!';
 
     this.add.text(w / 2, h / 2 - 80, winText, {
       fontSize: '36px',
@@ -41,7 +41,7 @@ class ResultScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const statsText = [
-      'Toplam Runner: ' + stats.totalRunners,
+      'Toplam Kaçan: ' + stats.totalRunners,
       'Kafesteki: ' + stats.cagedRunners,
       'Serbest: ' + stats.freeRunners,
     ].join('\n');

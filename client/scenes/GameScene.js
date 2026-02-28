@@ -115,7 +115,7 @@ class GameScene extends Phaser.Scene {
       padding: { x: 8, y: 4 },
     }).setScrollFactor(0).setDepth(999);
 
-    this.teamText = this.add.text(10, 42, myTeam === 'hunter' ? 'HUNTER' : 'RUNNER', {
+    this.teamText = this.add.text(10, 42, myTeam === 'hunter' ? 'KOVALAYAN' : 'KAÇAN', {
       fontSize: '16px', color: myTeam === 'hunter' ? '#ff4444' : '#f0c020',
       backgroundColor: '#00000088', padding: { x: 8, y: 4 },
     }).setScrollFactor(0).setDepth(999);

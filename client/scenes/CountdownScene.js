@@ -47,23 +47,23 @@ class CountdownScene extends Phaser.Scene {
       }
     }
 
-    // Background gradient
+    // Background gradient — matches lobby orange
     var bg = this.add.graphics();
-    bg.fillGradientStyle(0x1a3a0a, 0x1a3a0a, 0x0d1f05, 0x0d1f05, 1);
+    bg.fillGradientStyle(0xFFAA00, 0xFFAA00, 0xFFD786, 0xFFD786, 1);
     bg.fillRect(0, 0, w, h);
 
     // Team label
-    var teamName = isHunter ? 'AVCI' : 'KAÇAK';
-    var teamColor = isHunter ? '#ff4444' : '#f0c020';
+    var teamName = isHunter ? 'KOVALAYAN' : 'KAÇAN';
+    var teamColor = isHunter ? '#7a0000' : '#003300';
     this.add.text(w / 2, 50, teamName, {
       fontFamily: font, fontSize: '42px', color: teamColor,
       fontStyle: 'bold', stroke: '#000000', strokeThickness: 5,
     }).setOrigin(0.5);
 
     // Team subtitle
-    var teamDesc = isHunter ? 'Kaçakları yakala!' : 'Yakalanmadan kaç!';
+    var teamDesc = isHunter ? 'Kaçanları yakala!' : 'Yakalanmadan kaç!';
     this.add.text(w / 2, 90, teamDesc, {
-      fontFamily: font, fontSize: '14px', color: '#cccccc',
+      fontFamily: font, fontSize: '14px', color: '#5a2200',
     }).setOrigin(0.5);
 
     // Avatar sprite
