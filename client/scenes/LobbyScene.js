@@ -25,11 +25,11 @@ class LobbyScene extends Phaser.Scene {
     div.lineBetween(400, 0, 400, h);
 
     // ── LEFT PANEL ──────────────────────────────────────
-    this.add.text(14, 10, 'DUCK HUNT', {
-      fontFamily: font, fontSize: '30px', color: '#7a2200',
+    this.add.text(14, 10, 'Prison Quack', {
+      fontFamily: font, fontSize: '30px', color: '#FF5F00',
       fontStyle: 'bold', stroke: '#000000', strokeThickness: 3,
     });
-    this.add.text(14, 42, 'Yakalanmadan hayatta kal!', {
+    this.add.text(14, 42, 'Sakın Yakalanma!', {
       fontFamily: font, fontSize: '11px', color: '#7a3300',
     });
 
@@ -53,13 +53,13 @@ class LobbyScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     // ── TEAM JOIN BUTTONS (below player list) ──────────
-    this.hunterBtn = this.add.text(103, 298, 'AVCI TAKIM', {
+    this.hunterBtn = this.add.text(103, h- 38, 'AVCI TAKIM', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
       color: '#ffffff', backgroundColor: '#aa2200',
       padding: { x: 18, y: 10 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    this.runnerBtn = this.add.text(297, 298, 'KAÇAK TAKIM', {
+    this.runnerBtn = this.add.text(297, h - 38, 'KAÇAK TAKIM', {
       fontFamily: font, fontSize: '15px', fontStyle: 'bold',
       color: '#ffffff', backgroundColor: '#1a5500',
       padding: { x: 18, y: 10 },
@@ -82,7 +82,7 @@ class LobbyScene extends Phaser.Scene {
     var rx = 415;
 
     // Name
-    this.add.text(rx, 10, 'İSMİN', {
+    this.add.text(rx, 10, 'İsmin:', {
       fontFamily: font, fontSize: '10px', color: '#7a3300', fontStyle: 'bold',
     });
 
@@ -94,7 +94,7 @@ class LobbyScene extends Phaser.Scene {
       backgroundColor: '#00000018', padding: { x: 14, y: 6 },
     }).setInteractive({ useHandCursor: true });
 
-    this.add.text(rx, 55, 'değiştirmek için tıkla', {
+    this.add.text(rx, 58, 'değiştirmek için tıkla', {
       fontFamily: font, fontSize: '9px', color: '#aa6600',
     });
 
@@ -105,7 +105,7 @@ class LobbyScene extends Phaser.Scene {
     });
 
     // Skin section
-    this.skinLabel = this.add.text(rx, 74, 'SKİN SEÇ', {
+    this.skinLabel = this.add.text(rx, 68, 'Skin:', {
       fontFamily: font, fontSize: '10px', color: '#7a3300', fontStyle: 'bold',
     }).setAlpha(0);
 
@@ -281,8 +281,8 @@ class LobbyScene extends Phaser.Scene {
     var gridH = rows * size + (rows - 1) * gap;
 
     // Panel behind skins: light for hunters, dark for runners
-    var panelColor = this.myTeam === 'hunter' ? 0xffe0cc : 0x1a3300;
-    var panelAlpha = this.myTeam === 'hunter' ? 0.6 : 0.55;
+    var panelColor = this.myTeam === 'hunter' ? 0xffe0cc : 0x7a3300;
+    var panelAlpha = this.myTeam === 'hunter' ? 0.2 : 0.2;
     this.skinPanelGraphics.fillStyle(panelColor, panelAlpha);
     this.skinPanelGraphics.fillRoundedRect(startX - 8, startY - 8, gridW + 16, gridH + 16, 8);
 

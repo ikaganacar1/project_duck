@@ -12,7 +12,7 @@ var config = {
     width: 812,
     height: 375,
   },
-  backgroundColor: '#1a3a0a',
+  backgroundColor: '#FFAA00',
   scene: [BootScene, LobbyScene, CountdownScene, GameScene, ResultScene],
 };
 

@@ -8,7 +8,7 @@ class BootScene extends Phaser.Scene {
     var h = this.cameras.main.height;
     this.loadingText = this.add.text(w / 2, h / 2, 'Loading...', {
       fontSize: '24px',
-      color: '#ffffff',
+      color: '#000000',
     }).setOrigin(0.5);
 
     // Asset definitions — supports png and svg, tries png first
