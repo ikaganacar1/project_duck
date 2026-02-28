@@ -18,22 +18,25 @@ class GameScene extends Phaser.Scene {
 
     this.drawMap();
 
+    // Helper: add drop shadow via preFX (WebGL only, silently skipped in canvas mode)
+    function shadow(obj, intensity) {
+      if (obj.preFX) obj.preFX.addShadow(2, 4, 0.08, 1, 0x000000, 6, intensity || 0.6);
+      return obj;
+    }
+
     this.obstacleSprites = [];
     for (var obs of this.gameData.obstacles) {
       var sprite;
       if (obs.type === 'rock') {
-        sprite = this.add.image(obs.x, obs.y, 'rock')
-          .setDisplaySize(obs.radius * 2, obs.radius * 2)
-          .setDropShadow(4, 6, 0x000000, 0.4);
+        sprite = shadow(this.add.image(obs.x, obs.y, 'rock')
+          .setDisplaySize(obs.radius * 2, obs.radius * 2));
       } else if (obs.type === 'tree') {
         this.add.image(obs.x, obs.y, 'tree-trunk').setDisplaySize(30, 30);
-        sprite = this.add.image(obs.x, obs.y - 10, 'tree-canopy')
-          .setDisplaySize(70, 70)
-          .setDropShadow(4, 6, 0x000000, 0.35);
+        sprite = shadow(this.add.image(obs.x, obs.y - 10, 'tree-canopy')
+          .setDisplaySize(70, 70));
       } else if (obs.type === 'bush') {
-        sprite = this.add.image(obs.x, obs.y, 'bush')
-          .setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7)
-          .setDropShadow(3, 5, 0x000000, 0.3);
+        sprite = shadow(this.add.image(obs.x, obs.y, 'bush')
+          .setDisplaySize(obs.radius * 2, obs.radius * 2).setAlpha(0.7), 0.4);
       }
       if (sprite) {
         sprite._obsData = obs;
@@ -44,7 +47,7 @@ class GameScene extends Phaser.Scene {
     this.cageSprites = [];
     for (var i = 0; i < this.gameData.cages.length; i++) {
       var cage = this.gameData.cages[i];
-      var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160).setDropShadow(5, 8, 0x000000, 0.4);
+      var cageSprite = shadow(this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160), 0.7);
       var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
         fontSize: '14px', color: '#ffffff',
       }).setOrigin(0.5);
@@ -334,9 +337,11 @@ class GameScene extends Phaser.Scene {
     var container = this.add.container(data.x, data.y);
     var sprite;
     if (hasSheet) {
-      sprite = this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48).setDropShadow(3, 4, 0x000000, 0.4);
+      sprite = this.add.sprite(0, 0, sheetKey, 0).setDisplaySize(48, 48);
+      if (sprite.preFX) sprite.preFX.addShadow(2, 4, 0.08, 1, 0x000000, 6, 0.6);
     } else {
-      sprite = this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38).setDropShadow(3, 4, 0x000000, 0.4);
+      sprite = this.add.image(0, 0, fallbackKey).setDisplaySize(48, 38);
+      if (sprite.preFX) sprite.preFX.addShadow(2, 4, 0.08, 1, 0x000000, 6, 0.6);
     }
     var nameLabel = this.add.text(0, -28, data.name || '', {
       fontSize: '11px', color: '#ffffff',
