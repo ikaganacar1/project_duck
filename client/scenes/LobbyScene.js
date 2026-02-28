@@ -146,18 +146,41 @@ class LobbyScene extends Phaser.Scene {
       self.hunterBtn.setVisible(false);
       self.runnerBtn.setVisible(false);
       self.readyBtn.setVisible(false);
-      self.spectatorBtn.setStyle({ color: '#ffffff', backgroundColor: '#004488' }).setText('👁  SEYİRCİ');
+      self.spectatorBtn.setAlpha(0).disableInteractive();
       self.buildSkinGrid(); // clears skin grid
       self.skinLabel.setAlpha(0);
-      // Show spectator status label
       self.spectatorStatusText.setAlpha(1);
+      self.backToPlayerBtn.setAlpha(1);
       window.network.emit('spectate', { name: self.playerName });
     });
 
-    this.spectatorStatusText = this.add.text(606, h - 110, '👁 SEYİRCİ\nOYUN BEKLENİYOR', {
+    this.spectatorStatusText = this.add.text(606, h - 120, '👁 SEYİRCİ\nOYUN BEKLENİYOR', {
       fontFamily: font, fontSize: '14px', color: '#aaddff', fontStyle: 'bold',
       align: 'center', lineSpacing: 4,
     }).setOrigin(0.5).setAlpha(0);
+
+    // Back to player button (only visible in spectator mode)
+    this.backToPlayerBtn = this.add.text(606, h - 78, 'OYUNCU OL', {
+      fontFamily: font, fontSize: '14px', color: '#ffddaa', fontStyle: 'bold',
+      backgroundColor: '#552200', padding: { x: 20, y: 8 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setAlpha(0);
+
+    this.backToPlayerBtn.on('pointerdown', function() {
+      if (!self.isSpectator) return;
+      self.isSpectator = false;
+      self.isReady = false;
+      // Restore team/ready UI
+      self.hunterBtn.setVisible(true);
+      self.runnerBtn.setVisible(true);
+      self.readyBtn.setVisible(true).setText('HAZIR DEĞİL').setStyle({ color: '#ffddaa', backgroundColor: '#7a2200' });
+      // Restore spectator button
+      self.spectatorBtn.setStyle({ color: '#aaddff', backgroundColor: '#003355' }).setText('👁  SEYİRCİ OL').setAlpha(1).setInteractive({ useHandCursor: true });
+      // Hide spectator UI
+      self.spectatorStatusText.setAlpha(0);
+      self.backToPlayerBtn.setAlpha(0);
+      // Re-join as player
+      window.network.emit('join', { name: self.playerName });
+    });
 
     // ── POPUP for team rejected ──────────────────────────
     this.popupBg = this.add.graphics().setDepth(500).setAlpha(0);

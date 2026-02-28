@@ -15,6 +15,7 @@ class Lobby {
       socket.emit('lobby:full');
       return false;
     }
+    this.spectators.delete(socket.id); // remove from spectators if switching back
     this.players.set(socket.id, { name, ready: false, team: null, skin: -1 });
     this.broadcast();
     return true;
