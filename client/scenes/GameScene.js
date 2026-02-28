@@ -88,7 +88,7 @@ class GameScene extends Phaser.Scene {
       var cage = this.gameData.cages[i];
       shadowG.fillEllipse(cage.x, cage.y + 75, 140, 35);
       var cageSprite = this.add.image(cage.x, cage.y, 'cage').setDisplaySize(160, 160);
-      var cageText = this.add.text(cage.x, cage.y - 90, 'Kafes', {
+      var cageText = this.add.text(cage.x, cage.y - 90, 'Hücre', {
         fontSize: '14px', color: '#ffffff',
       }).setOrigin(0.5);
       var progressText = this.add.text(cage.x, cage.y + 90, '', {
@@ -131,11 +131,15 @@ class GameScene extends Phaser.Scene {
       backgroundColor: '#cc222299', padding: { x: 12, y: 5 },
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(999);
 
-    // --- CENTER COUNTER (struggle + rescue) ---
-    this.centerCounter = this.add.text(812 / 2, 375 / 2, ' ', {
-      fontSize: '24px', color: '#ffffff', fontStyle: 'bold',
-      backgroundColor: '#cc333399', padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(1010).setAlpha(0);
+    // --- PROGRESS BAR (struggle / rescue) ---
+    var barW = 220, barH = 18, barX = 812 / 2 - barW / 2, barY = 375 - 56;
+    this.progressBarBg = this.add.graphics().setScrollFactor(0).setDepth(1010).setAlpha(0);
+    this.progressBarFill = this.add.graphics().setScrollFactor(0).setDepth(1011).setAlpha(0);
+    this.progressLabel = this.add.text(812 / 2, barY - 20, '', {
+      fontFamily: hudFont, fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(1012).setAlpha(0);
+    this._barW = barW; this._barH = barH; this._barX = barX; this._barY = barY;
 
     // --- TAP ANYWHERE: struggle when carried, rescue when near cage ---
     this.input.on('pointerdown', function() {
@@ -356,10 +360,10 @@ class GameScene extends Phaser.Scene {
       var cageData = state.cages[cageSpr.index];
       if (cageData.prisoners.length > 0) {
         cageSpr.sprite.setTexture('cage-active').setDisplaySize(160, 160);
-        cageSpr.text.setText('Kafes (' + cageData.prisoners.length + ')');
+        cageSpr.text.setText('Hücre (' + cageData.prisoners.length + ')');
       } else {
         cageSpr.sprite.setTexture('cage').setDisplaySize(160, 160);
-        cageSpr.text.setText('Kafes');
+        cageSpr.text.setText('Hücre');
       }
       if (cageData.rescueProgress > 0) {
         cageSpr.progressText.setText('Kurtarma: ' + cageData.rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD);
@@ -373,38 +377,30 @@ class GameScene extends Phaser.Scene {
     if (meState) {
       if (meState.state === 'carried') {
         var count = Math.floor(meState.struggleCount || 0);
-        this.centerCounter.setText('TIKLA! ' + count + '/' + CONSTANTS.STRUGGLE_THRESHOLD);
-        this.centerCounter.setBackgroundColor('#cc333399');
-        this.centerCounter.setAlpha(1);
+        this.drawProgressBar(count, CONSTANTS.STRUGGLE_THRESHOLD, '#cc3333', 'TIKLA!');
         this.setStatus('Yakalandin! Ekrana tikla!');
       } else if (meState.state === 'caged') {
-        this.centerCounter.setAlpha(0);
-        this.setStatus('Kafestesin! Bekle...');
+        this.hideProgressBar();
+        this.setStatus('Hücredesin! Bekle...');
       } else if (meState.state === 'free') {
-        // Immunity indicator
         if (meState.immune) {
           this.setStatus('IMMUNE!');
         } else {
           this.setStatus('');
         }
-        // Rescue counter for runners near cage with prisoners
         if (meState.team === 'runner') {
           var nearCage = this.findNearestCage(meState.x, meState.y);
           if (nearCage !== null && state.cages[nearCage].prisoners.length > 0) {
-            this.centerCounter.setText('KURTAR! ' + state.cages[nearCage].rescueProgress + '/' + CONSTANTS.CAGE_RESCUE_THRESHOLD);
-            this.centerCounter.setBackgroundColor('#33aa3399');
-            this.centerCounter.setAlpha(1);
-            if (!meState.immune) {
-              this.setStatus('Kafese yakin! Tikla!');
-            }
+            this.drawProgressBar(state.cages[nearCage].rescueProgress, CONSTANTS.CAGE_RESCUE_THRESHOLD, '#33aa33', 'KURTAR!');
+            if (!meState.immune) this.setStatus('Hücreye yakin! Tikla!');
           } else {
-            this.centerCounter.setAlpha(0);
+            this.hideProgressBar();
           }
         } else {
-          this.centerCounter.setAlpha(0);
+          this.hideProgressBar();
         }
       } else {
-        this.centerCounter.setAlpha(0);
+        this.hideProgressBar();
         this.setStatus('');
       }
 
@@ -505,6 +501,30 @@ class GameScene extends Phaser.Scene {
       }
     }
     return null;
+  }
+
+  drawProgressBar(value, max, color, label) {
+    var bW = this._barW, bH = this._barH, bX = this._barX, bY = this._barY;
+    var fillW = Math.round((value / max) * bW);
+    var hex = parseInt(color.replace('#', ''), 16);
+
+    this.progressBarBg.clear();
+    this.progressBarBg.fillStyle(0x000000, 0.6);
+    this.progressBarBg.fillRoundedRect(bX - 2, bY - 2, bW + 4, bH + 4, 4);
+    this.progressBarBg.setAlpha(1);
+
+    this.progressBarFill.clear();
+    this.progressBarFill.fillStyle(hex, 1);
+    if (fillW > 0) this.progressBarFill.fillRoundedRect(bX, bY, fillW, bH, 3);
+    this.progressBarFill.setAlpha(1);
+
+    this.progressLabel.setText(label).setAlpha(1);
+  }
+
+  hideProgressBar() {
+    this.progressBarBg.setAlpha(0);
+    this.progressBarFill.setAlpha(0);
+    this.progressLabel.setAlpha(0);
   }
 
   setStatus(text) {
