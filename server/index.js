@@ -25,18 +25,26 @@ app.use(function(req, res, next) {
 app.use(express.static(path.join(__dirname, '..', 'client')));
 app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
 
-// Scan runner skins at startup
+// Scan skins at startup
 const runnersDir = path.join(__dirname, '..', 'client', 'assets', 'runners');
+const huntersDir = path.join(__dirname, '..', 'client', 'assets', 'hunters');
 let runnerSkins = [];
+let hunterSkins = [];
 try {
   runnerSkins = fs.readdirSync(runnersDir).filter(f => f.endsWith('.png')).sort();
   console.log('Runner skins found:', runnerSkins.length);
 } catch (e) {
   console.log('No runner skins directory found');
 }
+try {
+  hunterSkins = fs.readdirSync(huntersDir).filter(f => f.endsWith('.png')).sort();
+  console.log('Hunter skins found:', hunterSkins.length);
+} catch (e) {
+  console.log('No hunter skins directory found');
+}
 
 app.get('/api/skins', (req, res) => {
-  res.json({ runners: runnerSkins });
+  res.json({ runners: runnerSkins, hunters: hunterSkins });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -54,7 +62,7 @@ lobby.onGameStart = (playerEntries) => {
   console.log('Game starting with', playerEntries.length, 'players');
   game = new Game(io, playerEntries, () => {
     setTimeout(returnToLobby, 5000);
-  }, runnerSkins.length);
+  }, runnerSkins.length, hunterSkins.length);
   game.start();
 };
 

@@ -189,13 +189,13 @@ class GameScene extends Phaser.Scene {
       if (p.moving && p.state === 'free') {
         spr.sprite.setFlipX(Math.cos(p.angle) < 0);
         if (spr.hasSheet) {
-          var walkKey = spr.team === 'hunter' ? 'hunter-walk' : 'runner-walk-' + spr.skin;
+          var walkKey = spr.team === 'hunter' ? 'hunter-walk-' + spr.skin : 'runner-walk-' + spr.skin;
           if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== walkKey) {
             spr.sprite.play(walkKey);
           }
         }
       } else if (spr.hasSheet) {
-        var idleKey = spr.team === 'hunter' ? 'hunter-idle' : 'runner-idle-' + spr.skin;
+        var idleKey = spr.team === 'hunter' ? 'hunter-idle-' + spr.skin : 'runner-idle-' + spr.skin;
         if (!spr.sprite.anims.isPlaying || spr.sprite.anims.currentAnim.key !== idleKey) {
           spr.sprite.play(idleKey);
         }
@@ -301,9 +301,9 @@ class GameScene extends Phaser.Scene {
   createPlayerSprite(id, data) {
     var sheetKey;
     var skin = data.skin !== undefined ? data.skin : -1;
-    if (data.team === 'hunter') {
-      sheetKey = 'hunter-sheet';
-    } else if (skin >= 0 && this.textures.exists('runner-skin-' + skin)) {
+    if (data.team === 'hunter' && skin >= 0 && this.textures.exists('hunter-skin-' + skin)) {
+      sheetKey = 'hunter-skin-' + skin;
+    } else if (data.team === 'runner' && skin >= 0 && this.textures.exists('runner-skin-' + skin)) {
       sheetKey = 'runner-skin-' + skin;
     } else {
       sheetKey = null;

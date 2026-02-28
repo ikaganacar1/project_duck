@@ -23,9 +23,6 @@ class BootScene extends Phaser.Scene {
       { key: 'cage-active', svgW: 160, svgH: 160 },
     ];
 
-    // Hunter spritesheet
-    this.load.spritesheet('hunter-sheet', 'assets/hunter-animation.png', { frameWidth: 1024, frameHeight: 1024 });
-
     // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
     for (var i = 0; i < this.assetDefs.length; i++) {
@@ -43,23 +40,34 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Fetch runner skin list from server, then continue loading
+    // Fetch skin lists from server, then continue loading
     var self = this;
     fetch('/api/skins').then(function(r) { return r.json(); }).then(function(data) {
       window.runnerSkins = data.runners || [];
-      self.loadRunnerSkins();
+      window.hunterSkins = data.hunters || [];
+      self.loadAllSkins();
     }).catch(function() {
       window.runnerSkins = [];
-      self.loadRunnerSkins();
+      window.hunterSkins = [];
+      self.loadAllSkins();
     });
   }
 
-  loadRunnerSkins() {
-    var skins = window.runnerSkins;
-    if (skins.length > 0) {
-      for (var i = 0; i < skins.length; i++) {
-        this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + skins[i], { frameWidth: 1024, frameHeight: 1024 });
-      }
+  loadAllSkins() {
+    var rSkins = window.runnerSkins;
+    var hSkins = window.hunterSkins;
+    var needsLoad = false;
+
+    for (var i = 0; i < rSkins.length; i++) {
+      this.load.spritesheet('runner-skin-' + i, 'assets/runners/' + rSkins[i], { frameWidth: 1024, frameHeight: 1024 });
+      needsLoad = true;
+    }
+    for (var j = 0; j < hSkins.length; j++) {
+      this.load.spritesheet('hunter-skin-' + j, 'assets/hunters/' + hSkins[j], { frameWidth: 1024, frameHeight: 1024 });
+      needsLoad = true;
+    }
+
+    if (needsLoad) {
       this.load.once('complete', function() {
         this.afterSkinsLoaded();
       }, this);
@@ -117,19 +125,23 @@ class BootScene extends Phaser.Scene {
   startGame() {
     this.generateCircleTexture('ground', 0x4a8a2a, 16);
 
-    // Hunter animations
-    if (this.textures.exists('hunter-sheet')) {
-      this.anims.create({ key: 'hunter-walk', frames: this.anims.generateFrameNumbers('hunter-sheet', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
-      this.anims.create({ key: 'hunter-idle', frames: [{ key: 'hunter-sheet', frame: 0 }], frameRate: 1 });
+    // Hunter skin animations
+    var hSkins = window.hunterSkins;
+    for (var i = 0; i < hSkins.length; i++) {
+      var hKey = 'hunter-skin-' + i;
+      if (this.textures.exists(hKey)) {
+        this.anims.create({ key: 'hunter-walk-' + i, frames: this.anims.generateFrameNumbers(hKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'hunter-idle-' + i, frames: [{ key: hKey, frame: 0 }], frameRate: 1 });
+      }
     }
 
     // Runner skin animations
-    var skins = window.runnerSkins;
-    for (var i = 0; i < skins.length; i++) {
-      var sheetKey = 'runner-skin-' + i;
-      if (this.textures.exists(sheetKey)) {
-        this.anims.create({ key: 'runner-walk-' + i, frames: this.anims.generateFrameNumbers(sheetKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
-        this.anims.create({ key: 'runner-idle-' + i, frames: [{ key: sheetKey, frame: 0 }], frameRate: 1 });
+    var rSkins = window.runnerSkins;
+    for (var j = 0; j < rSkins.length; j++) {
+      var rKey = 'runner-skin-' + j;
+      if (this.textures.exists(rKey)) {
+        this.anims.create({ key: 'runner-walk-' + j, frames: this.anims.generateFrameNumbers(rKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
+        this.anims.create({ key: 'runner-idle-' + j, frames: [{ key: rKey, frame: 0 }], frameRate: 1 });
       }
     }
 

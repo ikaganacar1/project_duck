@@ -3,7 +3,7 @@ const { assignTeams } = require('./teams');
 const { generateObstacles, generateSpawnPoints } = require('./map');
 
 class Game {
-  constructor(io, playerEntries, onGameEnd, runnerSkinCount) {
+  constructor(io, playerEntries, onGameEnd, runnerSkinCount, hunterSkinCount) {
     this.io = io;
     this.onGameEnd = onGameEnd;
     this.tickTimer = null;
@@ -17,26 +17,40 @@ class Game {
     const spawns = generateSpawnPoints(hunters, runners);
 
     // Shuffle skin indices for runners
-    var skinCount = runnerSkinCount || 0;
-    var skinPool = [];
-    if (skinCount > 0) {
-      for (var si = 0; si < skinCount; si++) skinPool.push(si);
-      // Fisher-Yates shuffle
-      for (var sj = skinPool.length - 1; sj > 0; sj--) {
-        var sk = Math.floor(Math.random() * (sj + 1));
-        var tmp = skinPool[sj]; skinPool[sj] = skinPool[sk]; skinPool[sk] = tmp;
+    var rSkinCount = runnerSkinCount || 0;
+    var rSkinPool = [];
+    if (rSkinCount > 0) {
+      for (var ri = 0; ri < rSkinCount; ri++) rSkinPool.push(ri);
+      for (var rj = rSkinPool.length - 1; rj > 0; rj--) {
+        var rk = Math.floor(Math.random() * (rj + 1));
+        var tmp = rSkinPool[rj]; rSkinPool[rj] = rSkinPool[rk]; rSkinPool[rk] = tmp;
       }
     }
-    var skinIdx = 0;
+    var rSkinIdx = 0;
+
+    // Shuffle skin indices for hunters
+    var hSkinCount = hunterSkinCount || 0;
+    var hSkinPool = [];
+    if (hSkinCount > 0) {
+      for (var hi = 0; hi < hSkinCount; hi++) hSkinPool.push(hi);
+      for (var hj = hSkinPool.length - 1; hj > 0; hj--) {
+        var hk = Math.floor(Math.random() * (hj + 1));
+        var tmp2 = hSkinPool[hj]; hSkinPool[hj] = hSkinPool[hk]; hSkinPool[hk] = tmp2;
+      }
+    }
+    var hSkinIdx = 0;
 
     this.players = new Map();
     for (const [id, { name }] of playerEntries) {
       const team = hunters.includes(id) ? 'hunter' : 'runner';
       const spawn = spawns[id];
       var skin = -1;
-      if (team === 'runner' && skinCount > 0) {
-        skin = skinPool[skinIdx % skinPool.length];
-        skinIdx++;
+      if (team === 'runner' && rSkinCount > 0) {
+        skin = rSkinPool[rSkinIdx % rSkinPool.length];
+        rSkinIdx++;
+      } else if (team === 'hunter' && hSkinCount > 0) {
+        skin = hSkinPool[hSkinIdx % hSkinPool.length];
+        hSkinIdx++;
       }
       this.players.set(id, {
         name,
