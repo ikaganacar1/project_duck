@@ -100,6 +100,7 @@ class GameScene extends Phaser.Scene {
       if (me.state === 'carried') {
         window.network.emit('struggle', {});
         this.cameras.main.flash(50, 255, 100, 100, false);
+        this.spawnEffect(me.x, me.y, 48);
       } else if (me.state === 'free' && me.team === 'runner') {
         var nearCage = this.findNearestCage(me.x, me.y);
         if (nearCage !== null && this.latestState.cages[nearCage].prisoners.length > 0) {
@@ -132,8 +133,11 @@ class GameScene extends Phaser.Scene {
       this.stateTime = 0;
     }.bind(this));
 
-    window.network.on('game:capture', function() {
+    window.network.on('game:capture', function(data) {
       this.sound.play('sfx-capture', { volume: 0.5 });
+      // Big fight effect at runner's position
+      var runner = this.latestState && this.latestState.players[data.runnerId];
+      if (runner) this.spawnEffect(runner.x, runner.y, 120);
     }.bind(this));
 
     window.network.on('game:rescued', function() {
@@ -355,6 +359,15 @@ class GameScene extends Phaser.Scene {
 
     this.playerSprites[id] = { container: container, sprite: sprite, nameLabel: nameLabel, hasSheet: hasSheet, team: data.team, skin: skin };
     return this.playerSprites[id];
+  }
+
+  spawnEffect(x, y, size) {
+    if (!this.textures.exists('fight-effect')) return;
+    var spr = this.add.sprite(x, y, 'fight-effect')
+      .setDisplaySize(size, size)
+      .setDepth(200);
+    spr.play('fight-effect');
+    spr.once('animationcomplete', function() { spr.destroy(); });
   }
 
   drawMap() {

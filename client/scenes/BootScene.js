@@ -26,6 +26,9 @@ class BootScene extends Phaser.Scene {
     // Map background
     this.load.image('map-bg', 'assets/map.png');
 
+    // Fight effect spritesheet (3 cols x 2 rows, 200x200 per frame)
+    this.load.spritesheet('fight-effect', 'assets/fight_effect.png', { frameWidth: 200, frameHeight: 200 });
+
     // Audio
     this.load.audio('sfx-menu', 'assets/menu-music.mp3');
     this.load.audio('sfx-game-start', 'assets/game-start.mp3');
@@ -156,6 +159,11 @@ class BootScene extends Phaser.Scene {
         this.anims.create({ key: 'runner-walk-' + j, frames: this.anims.generateFrameNumbers(rKey, { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
         this.anims.create({ key: 'runner-idle-' + j, frames: [{ key: rKey, frame: 0 }], frameRate: 1 });
       }
+    }
+
+    // Fight effect animation (6 frames: 3x2 grid)
+    if (this.textures.exists('fight-effect')) {
+      this.anims.create({ key: 'fight-effect', frames: this.anims.generateFrameNumbers('fight-effect', { start: 0, end: 5 }), frameRate: 12, repeat: 0 });
     }
 
     window.network.connect().then(function() {
