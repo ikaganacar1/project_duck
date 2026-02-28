@@ -21,13 +21,13 @@ const CONSTANTS = {
     { x: -750, y: 0 },
   ],
   CAGE_ZONE_RADIUS: 80,
-  HUNTER_SPAWN_DISTANCE: 750,
-  RUNNER_SPAWN_RADIUS: 150,
+  HUNTER_SPAWN_DISTANCE: 850,
+  RUNNER_SPAWN_RADIUS: 250,
   PLAYER_NAMES: [
-    'SerseriOrdek', 'KacakTavuk', 'NinjaKaz', 'ZipZipKurba', 'PanikTavsan',
-    'GizliSincap', 'FirtinaBoga', 'KorkusuzFare', 'UcanPenguen', 'DalgaBalik',
-    'CanliPanda', 'AclikKurdu', 'SakarAyi', 'HizliKaplin', 'CilginMartir',
-    'GolgeAslan', 'TatliFoka', 'YildirimTilki', 'BuzKartal', 'AtesKedi',
+    'ÇirkinÖrdek', 'KorkakTavuk', 'NinjaKaz', 'Gurba', 'PanikTavşan',
+    'ÇirkinMalKöpek', 'KırmızıBoğa', 'LogitechFare', 'LinuxPenguen', 'YürüyenUçak',
+    'ŞişkoAyıcık', 'ElmaKurdu', 'KayseriliPastırma', 'ÇubukTurşusu', 'AyvalıkTostu',
+    'OstimBaykuşu', 'TatlıFokçuk', 'ZıpZıpMaymun', 'PremsesKedi', 'CiciKuş',
   ],
 };
 
