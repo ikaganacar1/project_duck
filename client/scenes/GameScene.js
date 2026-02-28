@@ -394,6 +394,9 @@ class GameScene extends Phaser.Scene {
       .setDepth(200);
     spr.play('fight-effect');
     spr.once('animationcomplete', function() { spr.destroy(); });
+    // Camera shake — stronger for big effects, subtle for small
+    var intensity = size >= 100 ? 0.007 : 0.003;
+    this.cameras.main.shake(150, intensity);
   }
 
   drawMap() {
