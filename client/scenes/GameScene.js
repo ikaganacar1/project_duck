@@ -106,6 +106,7 @@ class GameScene extends Phaser.Scene {
         if (nearCage !== null && this.latestState.cages[nearCage].prisoners.length > 0) {
           window.network.emit('rescue', { cageIndex: nearCage });
           this.cameras.main.flash(50, 100, 255, 100, false);
+          this.cameras.main.shake(80, 0.002);
         }
       }
     }, this);
@@ -150,14 +151,17 @@ class GameScene extends Phaser.Scene {
 
     window.network.on('game:rescued', function() {
       this.sound.play('sfx-cage-rescue', { volume: 0.5 });
+      this.cameras.main.shake(250, 0.006);
     }.bind(this));
 
     window.network.on('game:caged', function() {
       this.sound.play('sfx-caged', { volume: 0.5 });
+      this.cameras.main.shake(200, 0.010);
     }.bind(this));
 
     window.network.on('game:freed', function() {
       this.sound.play('sfx-struggle-free', { volume: 0.5 });
+      this.cameras.main.shake(180, 0.008);
     }.bind(this));
 
     window.network.on('game:end', function(data) {
