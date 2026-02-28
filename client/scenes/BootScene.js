@@ -11,29 +11,25 @@ class BootScene extends Phaser.Scene {
       color: '#ffffff',
     }).setOrigin(0.5);
 
-    // Try loading custom assets — missing files are handled gracefully
-    this.assetList = [
-      { key: 'duck-hunter', path: 'assets/duck-hunter.svg', type: 'svg', w: 96, h: 76 },
-      { key: 'duck-runner', path: 'assets/duck-runner.svg', type: 'svg', w: 96, h: 76 },
-      { key: 'rock', path: 'assets/rock.svg', type: 'svg', w: 80, h: 80 },
-      { key: 'tree-trunk', path: 'assets/tree-trunk.svg', type: 'svg', w: 30, h: 30 },
-      { key: 'tree-canopy', path: 'assets/tree-canopy.svg', type: 'svg', w: 70, h: 70 },
-      { key: 'bush', path: 'assets/bush.svg', type: 'svg', w: 90, h: 90 },
-      { key: 'cage', path: 'assets/cage.svg', type: 'svg', w: 160, h: 160 },
-      { key: 'cage-active', path: 'assets/cage-active.svg', type: 'svg', w: 160, h: 160 },
+    // Asset definitions — supports png and svg, tries png first
+    this.assetDefs = [
+      { key: 'duck-hunter', svgW: 96, svgH: 76 },
+      { key: 'duck-runner', svgW: 96, svgH: 76 },
+      { key: 'rock', svgW: 80, svgH: 80 },
+      { key: 'tree-trunk', svgW: 30, svgH: 30 },
+      { key: 'tree-canopy', svgW: 70, svgH: 70 },
+      { key: 'bush', svgW: 90, svgH: 90 },
+      { key: 'cage', svgW: 160, svgH: 160 },
+      { key: 'cage-active', svgW: 160, svgH: 160 },
     ];
 
+    // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
-    for (var i = 0; i < this.assetList.length; i++) {
-      var a = this.assetList[i];
-      if (a.type === 'svg') {
-        this.load.svg(a.key, a.path, { width: a.w, height: a.h });
-      } else {
-        this.load.image(a.key, a.path);
-      }
+    for (var i = 0; i < this.assetDefs.length; i++) {
+      var a = this.assetDefs[i];
+      this.load.image(a.key, 'assets/' + a.key + '.png');
     }
 
-    // Don't fail on missing files
     this.load.on('loaderror', function(file) {
       this.loadedAssets[file.key] = false;
     }, this);
@@ -44,7 +40,31 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Generate fallback textures for any asset that failed to load
+    // For assets that failed PNG load, try SVG before fallback
+    var needsSvg = [];
+    for (var i = 0; i < this.assetDefs.length; i++) {
+      var a = this.assetDefs[i];
+      if (!this.loadedAssets[a.key]) {
+        needsSvg.push(a);
+      }
+    }
+
+    if (needsSvg.length > 0) {
+      for (var j = 0; j < needsSvg.length; j++) {
+        var s = needsSvg[j];
+        this.load.svg(s.key, 'assets/' + s.key + '.svg', { width: s.svgW, height: s.svgH });
+      }
+      this.load.once('complete', function() {
+        this.applyFallbacks();
+        this.startGame();
+      }, this);
+      this.load.start();
+    } else {
+      this.startGame();
+    }
+  }
+
+  applyFallbacks() {
     var fallbacks = {
       'duck-hunter': function(scene) { scene.generateDuckTexture('duck-hunter', 0xcc3333); },
       'duck-runner': function(scene) { scene.generateDuckTexture('duck-runner', 0xf0c020); },
@@ -61,8 +81,9 @@ class BootScene extends Phaser.Scene {
         fallbacks[key](this);
       }
     }
+  }
 
-    // Ground is always generated (no asset needed)
+  startGame() {
     this.generateCircleTexture('ground', 0x4a8a2a, 16);
 
     window.network.connect().then(function() {
