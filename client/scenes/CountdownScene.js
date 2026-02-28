@@ -74,6 +74,9 @@ class CountdownScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
+    // Game start sound
+    this.sound.play('sfx-game-start', { volume: 0.5 });
+
     // Countdown text (starts hidden, shown by timer)
     this.countdownText = this.add.text(w / 2, h - 60, '', {
       fontFamily: font, fontSize: '64px', color: '#ffffff',

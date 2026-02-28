@@ -23,6 +23,19 @@ class BootScene extends Phaser.Scene {
       { key: 'cage-active', svgW: 160, svgH: 160 },
     ];
 
+    // Map background
+    this.load.image('map-bg', 'assets/map.png');
+
+    // Audio
+    this.load.audio('sfx-menu', 'assets/menu-music.mp3');
+    this.load.audio('sfx-game-start', 'assets/game-start.mp3');
+    this.load.audio('sfx-capture', 'assets/capture.mp3');
+    this.load.audio('sfx-cage-rescue', 'assets/cage-rescue.mp3');
+    this.load.audio('sfx-struggle-free', 'assets/struggle-free.mp3');
+    this.load.audio('sfx-game-win', 'assets/game-win.mp3');
+    this.load.audio('sfx-game-lose', 'assets/game-lose.mp3');
+    this.load.audio('sfx-caged', 'assets/jail-door.mp3');
+
     // Try loading PNG first, SVG as second option
     this.loadedAssets = {};
     for (var i = 0; i < this.assetDefs.length; i++) {

@@ -12,6 +12,15 @@ class ResultScene extends Phaser.Scene {
     const h = this.cameras.main.height;
     const { winner, stats } = this.resultData;
 
+    // Win/lose sound based on my team
+    const myTeam = this.resultData.myTeam || null;
+    const iWon = myTeam === winner;
+    if (myTeam) {
+      this.sound.play(iWon ? 'sfx-game-win' : 'sfx-game-lose', { volume: 0.5 });
+    } else {
+      this.sound.play('sfx-game-win', { volume: 0.5 });
+    }
+
     const isHunterWin = winner === 'hunter';
     const winColor = isHunterWin ? '#ff4444' : '#f0c020';
     const winText = isHunterWin ? 'HUNTER KAZANDI!' : 'RUNNER KAZANDI!';

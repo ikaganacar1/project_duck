@@ -124,8 +124,25 @@ class GameScene extends Phaser.Scene {
       this.stateTime = 0;
     }.bind(this));
 
+    window.network.on('game:capture', function() {
+      this.sound.play('sfx-capture', { volume: 0.5 });
+    }.bind(this));
+
+    window.network.on('game:rescued', function() {
+      this.sound.play('sfx-cage-rescue', { volume: 0.5 });
+    }.bind(this));
+
+    window.network.on('game:caged', function() {
+      this.sound.play('sfx-caged', { volume: 0.5 });
+    }.bind(this));
+
+    window.network.on('game:freed', function() {
+      this.sound.play('sfx-struggle-free', { volume: 0.5 });
+    }.bind(this));
+
     window.network.on('game:end', function(data) {
       this.joystick.destroy();
+      data.myTeam = myTeam;
       this.scene.start('Result', data);
     }.bind(this));
   }
@@ -339,26 +356,27 @@ class GameScene extends Phaser.Scene {
     );
     outer.setDepth(-3);
 
-    // Green playable area
-    var g = this.add.graphics();
-    g.fillStyle(0x4a8a2a, 1);
-    g.fillCircle(0, 0, CONSTANTS.MAP_RADIUS);
-    g.setDepth(-1);
+    // Map background image centered at origin, scaled to cover the play area
+    var mapSize = CONSTANTS.MAP_RADIUS * 2;
+    if (this.textures.exists('map-bg')) {
+      this.add.image(0, 0, 'map-bg')
+        .setDisplaySize(mapSize, mapSize)
+        .setDepth(-2);
+    } else {
+      // Fallback: green circle
+      var g = this.add.graphics();
+      g.fillStyle(0x4a8a2a, 1);
+      g.fillCircle(0, 0, CONSTANTS.MAP_RADIUS);
+      g.setDepth(-2);
+    }
 
     // Thick visible border
     var border = this.add.graphics();
     border.lineStyle(6, 0xff4444, 0.8);
     border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS);
-    // Second ring for visibility
     border.lineStyle(2, 0xffffff, 0.3);
     border.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS + 4);
     border.setDepth(50);
-
-    // Dashed warning ring inside
-    var warning = this.add.graphics();
-    warning.lineStyle(1, 0xffaa00, 0.3);
-    warning.strokeCircle(0, 0, CONSTANTS.MAP_RADIUS - 30);
-    warning.setDepth(-1);
   }
 
   findNearestCage(px, py) {

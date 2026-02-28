@@ -79,6 +79,16 @@ class LobbyScene extends Phaser.Scene {
       fontFamily: font, fontSize: '20px', color: '#ff6644', fontStyle: 'bold',
     }).setOrigin(0.5);
 
+    // Menu music
+    if (!this.sound.get('sfx-menu')) {
+      this.menuMusic = this.sound.add('sfx-menu', { volume: 0.3, loop: true });
+    } else {
+      this.menuMusic = this.sound.get('sfx-menu');
+    }
+    if (!this.menuMusic.isPlaying) {
+      this.menuMusic.play();
+    }
+
     // Join
     window.network.emit('join', { name: this.playerName });
 
@@ -110,6 +120,7 @@ class LobbyScene extends Phaser.Scene {
     }.bind(this));
 
     window.network.on('game:start', function(data) {
+      if (this.menuMusic) this.menuMusic.stop();
       this.scene.start('Countdown', data);
     }.bind(this));
 
