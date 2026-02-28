@@ -80,10 +80,12 @@ class Lobby {
       this.cancelCountdown();
       return;
     }
-    const allReady = [...this.players.values()].every((p) => p.ready && p.team);
-    if (allReady && !this.countdownTimer) {
+    const values = [...this.players.values()];
+    const allReady = values.every((p) => p.ready && p.team);
+    const hasHunter = values.some((p) => p.team === 'hunter');
+    if (allReady && hasHunter && !this.countdownTimer) {
       this.startCountdown();
-    } else if (!allReady) {
+    } else if (!allReady || !hasHunter) {
       this.cancelCountdown();
     }
   }
