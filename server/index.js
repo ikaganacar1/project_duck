@@ -84,6 +84,21 @@ io.on('connection', (socket) => {
     lobby.setReady(socket.id, ready);
   });
 
+  socket.on('team:select', ({ team }) => {
+    if (game) return;
+    lobby.setTeam(socket.id, team);
+  });
+
+  socket.on('skin:select', ({ skin }) => {
+    if (game) return;
+    lobby.setSkin(socket.id, skin);
+  });
+
+  socket.on('name:update', ({ name }) => {
+    if (game) return;
+    lobby.setName(socket.id, name);
+  });
+
   socket.on('input', (data) => {
     if (game) game.handleInput(socket.id, data);
   });

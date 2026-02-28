@@ -1,5 +1,4 @@
 const C = require('../shared/constants');
-const { assignTeams } = require('./teams');
 const { generateObstacles, generateSpawnPoints } = require('./map');
 
 class Game {
@@ -10,51 +9,31 @@ class Game {
     this.timerInterval = null;
     this.timeRemaining = C.GAME_DURATION;
 
-    const ids = playerEntries.map(([id]) => id);
-    const { hunters, runners } = assignTeams(ids);
+    // Derive hunter/runner arrays from lobby team selections
+    const hunters = playerEntries.filter(([, p]) => p.team === 'hunter').map(([id]) => id);
+    const runners = playerEntries.filter(([, p]) => p.team === 'runner').map(([id]) => id);
 
     this.obstacles = generateObstacles();
     const spawns = generateSpawnPoints(hunters, runners);
 
-    // Shuffle skin indices for runners
+    // Fallback skin pools (in case a player has skin -1)
     var rSkinCount = runnerSkinCount || 0;
-    var rSkinPool = [];
-    if (rSkinCount > 0) {
-      for (var ri = 0; ri < rSkinCount; ri++) rSkinPool.push(ri);
-      for (var rj = rSkinPool.length - 1; rj > 0; rj--) {
-        var rk = Math.floor(Math.random() * (rj + 1));
-        var tmp = rSkinPool[rj]; rSkinPool[rj] = rSkinPool[rk]; rSkinPool[rk] = tmp;
-      }
-    }
-    var rSkinIdx = 0;
-
-    // Shuffle skin indices for hunters
     var hSkinCount = hunterSkinCount || 0;
-    var hSkinPool = [];
-    if (hSkinCount > 0) {
-      for (var hi = 0; hi < hSkinCount; hi++) hSkinPool.push(hi);
-      for (var hj = hSkinPool.length - 1; hj > 0; hj--) {
-        var hk = Math.floor(Math.random() * (hj + 1));
-        var tmp2 = hSkinPool[hj]; hSkinPool[hj] = hSkinPool[hk]; hSkinPool[hk] = tmp2;
-      }
-    }
-    var hSkinIdx = 0;
+    var rFallbackSkin = 0;
+    var hFallbackSkin = 0;
 
     this.players = new Map();
-    for (const [id, { name }] of playerEntries) {
-      const team = hunters.includes(id) ? 'hunter' : 'runner';
+    for (const [id, { name, team, skin: chosenSkin }] of playerEntries) {
       const spawn = spawns[id];
-      var skin = -1;
-      if (team === 'runner' && rSkinCount > 0) {
-        skin = rSkinPool[rSkinIdx % rSkinPool.length];
-        rSkinIdx++;
-      } else if (team === 'hunter' && hSkinCount > 0) {
-        skin = hSkinPool[hSkinIdx % hSkinPool.length];
-        hSkinIdx++;
+      // Use chosen skin from lobby, fallback to sequential if -1
+      var skin = chosenSkin >= 0 ? chosenSkin : -1;
+      if (skin === -1) {
+        if (team === 'runner' && rSkinCount > 0) { skin = rFallbackSkin++ % rSkinCount; }
+        if (team === 'hunter' && hSkinCount > 0) { skin = hFallbackSkin++ % hSkinCount; }
       }
       this.players.set(id, {
         name,
-        team,
+        team: team,
         skin,
         x: spawn.x,
         y: spawn.y,
