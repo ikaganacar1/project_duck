@@ -8,6 +8,10 @@ class SpectatorScene extends Phaser.Scene {
   }
 
   preload() {
+    // Ensure map is loaded (BootScene loads it but add as safety fallback)
+    if (!this.textures.exists('map-bg')) {
+      this.load.image('map-bg', 'assets/map.png');
+    }
     var rSkins = window.runnerSkins || [];
     var hSkins = window.hunterSkins || [];
     for (var ri = 0; ri < rSkins.length; ri++) {
