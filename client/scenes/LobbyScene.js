@@ -271,11 +271,14 @@ class LobbyScene extends Phaser.Scene {
     var skins = this.myTeam === 'hunter' ? window.hunterSkins : window.runnerSkins;
     var prefix = this.myTeam === 'hunter' ? 'hunter-skin-' : 'runner-skin-';
     var self = this;
-    var startX = 421;
-    var startY = 92;
-    var size = 56;
-    var gap = 5;
-    var perRow = 7;
+    var size = 75;
+    var gap = 6;
+    // runners: 9 skins → 3 per row (3x3). hunters: 8 skins → 4 per row (4x2)
+    var perRow = this.myTeam === 'runner' ? 3 : 4;
+    // Center the grid horizontally in right panel (421-812 = 391px wide)
+    var gridW = perRow * size + (perRow - 1) * gap;
+    var startX = 421 + (391 - gridW) / 2;
+    var startY = 94;
 
     for (var j = 0; j < skins.length; j++) {
       var key = prefix + j;
