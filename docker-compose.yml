@@ -2,5 +2,10 @@ services:
   game:
     build: .
     ports:
-      - "3000:3000"
+      - "25565:3000"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0'
+          memory: '0'
