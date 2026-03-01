@@ -46,35 +46,9 @@ class SpectatorScene extends Phaser.Scene {
       }
     }
 
-    // 2x player FOV (player zoom=1 shows 812x375, we show 1624x750)
     var zoom = 0.5;
     this.zoom = zoom;
-    this.cameras.main.setZoom(zoom);
-    this.cameras.main.centerOn(0, 0);
-
-    // ── DRAG TO PAN ────────────────────────────────────────────
     var self = this;
-    this._drag = null;
-    var vpW = w / zoom;  // 1624 world units
-    var vpH = h / zoom;  // 750 world units
-    var clampX0 = -CONSTANTS.MAP_RADIUS;
-    var clampX1 = CONSTANTS.MAP_RADIUS - vpW;
-    var clampY0 = -CONSTANTS.MAP_RADIUS;
-    var clampY1 = CONSTANTS.MAP_RADIUS - vpH;
-
-    this.input.on('pointerdown', function(ptr) {
-      self._drag = { px: ptr.x, py: ptr.y, sx: self.cameras.main.scrollX, sy: self.cameras.main.scrollY };
-    });
-    this.input.on('pointermove', function(ptr) {
-      if (!self._drag) return;
-      var dx = (ptr.x - self._drag.px) / zoom;
-      var dy = (ptr.y - self._drag.py) / zoom;
-      var nx = Math.max(clampX0, Math.min(clampX1, self._drag.sx - dx));
-      var ny = Math.max(clampY0, Math.min(clampY1, self._drag.sy - dy));
-      self.cameras.main.setScroll(nx, ny);
-    });
-    this.input.on('pointerup', function() { self._drag = null; });
-    this.input.on('pointerupoutside', function() { self._drag = null; });
 
     // Collect all world objects so uiCam can ignore them
     var worldObjs = [];
@@ -156,6 +130,29 @@ class SpectatorScene extends Phaser.Scene {
 
     // Main camera ignores all HUD objects
     this.cameras.main.ignore([this.timerText, this.spectatorBadge, this.playerCountText]);
+
+    // ── MAIN CAMERA: zoom + bounds + center (set AFTER uiCam exists) ──
+    this.cameras.main.setZoom(zoom);
+    this.cameras.main.setBounds(
+      -CONSTANTS.MAP_RADIUS, -CONSTANTS.MAP_RADIUS,
+      CONSTANTS.MAP_RADIUS * 2, CONSTANTS.MAP_RADIUS * 2
+    );
+    this.cameras.main.centerOn(0, 0);
+
+    // ── DRAG TO PAN ───────────────────────────────────────────
+    this._drag = null;
+    this.input.on('pointerdown', function(ptr) {
+      self._drag = { px: ptr.x, py: ptr.y, sx: self.cameras.main.scrollX, sy: self.cameras.main.scrollY };
+    });
+    this.input.on('pointermove', function(ptr) {
+      if (!self._drag) return;
+      var dx = (ptr.x - self._drag.px) / zoom;
+      var dy = (ptr.y - self._drag.py) / zoom;
+      // setBounds handles clamping automatically
+      self.cameras.main.setScroll(self._drag.sx - dx, self._drag.sy - dy);
+    });
+    this.input.on('pointerup', function() { self._drag = null; });
+    this.input.on('pointerupoutside', function() { self._drag = null; });
 
     // ── Events ────────────────────────────────────────────────
     this.latestState = null;
