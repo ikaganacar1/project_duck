@@ -50,7 +50,7 @@ class BootScene extends Phaser.Scene {
 
   create() {
     // Fetch skin list but don't load textures yet — loaded lazily in LobbyScene
-    fetch('/api/skins').then(function(r) { return r.json(); }).then(function(data) {
+    fetch('api/skins').then(function(r) { return r.json(); }).then(function(data) {
       window.runnerSkins = data.runners || [];
       window.hunterSkins = data.hunters || [];
     }).catch(function() {
