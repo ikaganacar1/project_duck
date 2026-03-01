@@ -14,8 +14,7 @@ app.use(compression());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' },
-  allowEIO3: true,
-  transports: ['polling', 'websocket'],
+  transports: ['websocket', 'polling'],
   path: BASE + '/socket.io',
 });
 

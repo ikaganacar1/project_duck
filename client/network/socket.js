@@ -8,7 +8,7 @@ class NetworkManager {
     // Detect base path from current URL for subpath deployments
     var base = window.location.pathname.split('/').slice(0, -1).filter(Boolean);
     var socketPath = (base.length ? '/' + base[0] : '') + '/socket.io';
-    this.socket = io({ path: socketPath, transports: ['polling', 'websocket'] });
+    this.socket = io({ path: socketPath, transports: ['websocket', 'polling'] });
     return new Promise((resolve, reject) => {
       this.socket.on('connect', () => {
         console.log('Connected:', this.socket.id);

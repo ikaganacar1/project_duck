@@ -304,6 +304,7 @@ class Game {
   }
 
   broadcastState() {
+    const now = Date.now();
     const players = {};
     for (const [id, p] of this.players) {
       players[id] = {
@@ -318,7 +319,7 @@ class Game {
         name: p.name,
         struggleCount: p.struggleCount,
         skin: p.skin,
-        immune: Date.now() < p.immuneUntil,
+        immune: now < p.immuneUntil,
       };
     }
     this.io.emit('game:state', {
