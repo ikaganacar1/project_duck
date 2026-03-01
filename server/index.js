@@ -31,8 +31,9 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.use(express.static(path.join(__dirname, '..', 'client')));
-app.use('/shared', express.static(path.join(__dirname, '..', 'shared')));
+const BASE = process.env.APP_BASE_PATH || '';
+app.use(BASE, express.static(path.join(__dirname, '..', 'client')));
+app.use(BASE + '/shared', express.static(path.join(__dirname, '..', 'shared')));
 
 // Scan skins at startup
 const runnersDir = path.join(__dirname, '..', 'client', 'assets', 'runners');
@@ -52,7 +53,7 @@ try {
   console.log('No hunter skins directory found');
 }
 
-app.get('/api/skins', (req, res) => {
+app.get(BASE + '/api/skins', (req, res) => {
   res.json({ runners: runnerSkins, hunters: hunterSkins });
 });
 
