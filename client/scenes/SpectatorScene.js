@@ -46,10 +46,35 @@ class SpectatorScene extends Phaser.Scene {
       }
     }
 
-    // Zoomed out main camera
-    var zoom = Math.min(w, h) / (CONSTANTS.MAP_RADIUS * 2 + 160);
+    // 2x player FOV (player zoom=1 shows 812x375, we show 1624x750)
+    var zoom = 0.5;
+    this.zoom = zoom;
     this.cameras.main.setZoom(zoom);
     this.cameras.main.centerOn(0, 0);
+
+    // ── DRAG TO PAN ────────────────────────────────────────────
+    var self = this;
+    this._drag = null;
+    var vpW = w / zoom;  // 1624 world units
+    var vpH = h / zoom;  // 750 world units
+    var clampX0 = -CONSTANTS.MAP_RADIUS;
+    var clampX1 = CONSTANTS.MAP_RADIUS - vpW;
+    var clampY0 = -CONSTANTS.MAP_RADIUS;
+    var clampY1 = CONSTANTS.MAP_RADIUS - vpH;
+
+    this.input.on('pointerdown', function(ptr) {
+      self._drag = { px: ptr.x, py: ptr.y, sx: self.cameras.main.scrollX, sy: self.cameras.main.scrollY };
+    });
+    this.input.on('pointermove', function(ptr) {
+      if (!self._drag) return;
+      var dx = (ptr.x - self._drag.px) / zoom;
+      var dy = (ptr.y - self._drag.py) / zoom;
+      var nx = Math.max(clampX0, Math.min(clampX1, self._drag.sx - dx));
+      var ny = Math.max(clampY0, Math.min(clampY1, self._drag.sy - dy));
+      self.cameras.main.setScroll(nx, ny);
+    });
+    this.input.on('pointerup', function() { self._drag = null; });
+    this.input.on('pointerupoutside', function() { self._drag = null; });
 
     // Collect all world objects so uiCam can ignore them
     var worldObjs = [];
@@ -134,13 +159,23 @@ class SpectatorScene extends Phaser.Scene {
 
     // ── Events ────────────────────────────────────────────────
     this.latestState = null;
-    window.network.on('game:state', function(state) { this.latestState = state; }.bind(this));
+    this.prevState = null;
+    this.stateTime = 0;
+    window.network.on('game:state', function(state) {
+      this.prevState = this.latestState;
+      this.latestState = state;
+      this.stateTime = 0;
+    }.bind(this));
     window.network.on('game:end', function() { this.scene.start('Lobby'); }.bind(this));
   }
 
-  update() {
+  update(time, delta) {
     if (!this.latestState) return;
     var state = this.latestState;
+
+    // Time-based interpolation between server ticks
+    this.stateTime += delta;
+    var t = Math.min(this.stateTime / CONSTANTS.TICK_INTERVAL, 1);
 
     var min = Math.floor(state.timer / 60);
     var sec = state.timer % 60;
@@ -159,8 +194,15 @@ class SpectatorScene extends Phaser.Scene {
       var spr = this.playerSprites[pid];
       if (!spr) spr = this.createPlayerSprite(pid, p);
 
-      spr.container.x += (p.x - spr.container.x) * 0.2;
-      spr.container.y += (p.y - spr.container.y) * 0.2;
+      // Smooth interpolation between prev and current server state
+      if (this.prevState && this.prevState.players[pid]) {
+        var prev = this.prevState.players[pid];
+        spr.container.x = prev.x + (p.x - prev.x) * t;
+        spr.container.y = prev.y + (p.y - prev.y) * t;
+      } else {
+        spr.container.x += (p.x - spr.container.x) * 0.3;
+        spr.container.y += (p.y - spr.container.y) * 0.3;
+      }
 
       if (p.moving && p.state === 'free') {
         spr.sprite.setFlipX(Math.cos(p.angle) < 0);
