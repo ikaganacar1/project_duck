@@ -7,6 +7,8 @@ const fs = require('fs');
 const Lobby = require('./lobby');
 const Game = require('./game');
 
+const BASE = process.env.APP_BASE_PATH || '';
+
 const app = express();
 app.use(compression());
 const server = http.createServer(app);
@@ -14,6 +16,7 @@ const io = new Server(server, {
   cors: { origin: '*' },
   allowEIO3: true,
   transports: ['polling', 'websocket'],
+  path: BASE + '/socket.io',
 });
 
 // Smart caching: versioned assets cached 1 year, HTML no-cache
@@ -31,7 +34,6 @@ app.use(function(req, res, next) {
   next();
 });
 
-const BASE = process.env.APP_BASE_PATH || '';
 app.use(BASE, express.static(path.join(__dirname, '..', 'client')));
 app.use(BASE + '/shared', express.static(path.join(__dirname, '..', 'shared')));
 
